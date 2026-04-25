@@ -9,6 +9,7 @@
 //    sidebarOpen     — current sidebar state
 //    onToggleSidebar — open/close sidebar
 //    sessionName     — name of the active session (shown truncated)
+//    fileName        — name of the attached file (shown instead of session name when present)
 //    onOpenSettings  — open the appearance settings modal
 // ============================================================
 
@@ -19,11 +20,12 @@ interface Props {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   sessionName: string;
+  fileName?: string | null;
   onOpenSettings: () => void;
 }
 
 export default function TopBar({
-  sidebarOpen, onToggleSidebar, sessionName, onOpenSettings,
+  sidebarOpen, onToggleSidebar, sessionName, fileName, onOpenSettings,
 }: Props) {
   const { isDark, toggleMode } = useTheme();
 
@@ -47,9 +49,9 @@ export default function TopBar({
         <Bot size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
         <span className="top-bar-title">Data Assistant</span>
 
-        {/* Active session name — truncated if long */}
-        {sessionName && (
-          <span className="top-bar-session">/ {sessionName}</span>
+        {/* File name when a file is attached, otherwise active session name */}
+        {(fileName || sessionName) && (
+          <span className="top-bar-session">/ {fileName ?? sessionName}</span>
         )}
       </div>
 

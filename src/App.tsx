@@ -257,6 +257,7 @@ function ChatApp() {
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(v => !v)}
           sessionName={activeSession?.name ?? ''}
+          fileName={fileContext?.name ?? null}
           onOpenSettings={() => setSettingsOpen(true)}
         />
 
