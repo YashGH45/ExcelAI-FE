@@ -32,9 +32,9 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
 
   // ── File handling ──────────────────────────────────────────
   const handleFile = useCallback(async (file: File) => {
-    const validExts = /\.(xlsx|xls|csv)$/i;
+    const validExts = /\.(xlsx|xls|csv|pdf)$/i;
     if (!validExts.test(file.name)) {
-      setError('Please upload a .xlsx, .xls, or .csv file.');
+      setError('Please upload a .xlsx, .xls, .csv, or .pdf file.');
       return;
     }
     setError(null);
@@ -94,7 +94,7 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
             <UploadCloud size={28} style={{ color: 'var(--accent)' }} />
             <span className="option-card-title">Upload a file</span>
             <span className="option-card-sub">
-              Analyse Excel or CSV data with AI
+              Analyse Excel, CSV, or PDF data with AI
             </span>
           </button>
 
@@ -134,7 +134,7 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
           Upload your data file
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 4 }}>
-          Supports .xlsx, .xls, and .csv files
+          Supports .xlsx, .xls, .csv, and .pdf files
         </p>
 
         {/* Drop zone — click triggers hidden file input */}
@@ -149,7 +149,7 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
           <input
             ref={inputRef}
             type="file"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.xls,.csv,.pdf"
             style={{ display: 'none' }}
             onChange={(e) => {
               const file = e.target.files?.[0];
