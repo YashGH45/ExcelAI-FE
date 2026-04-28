@@ -16,6 +16,10 @@ export interface Message {
   retrievalInfo?: RetrievalInfo;
   /** The output format active when this message was generated */
   outputFormat?: OutputFormat;
+  /** Vega-Lite spec returned by the backend — triggers chart rendering */
+  vegaSpec?: Record<string, unknown>;
+  /** Key insights extracted from the data analysis */
+  insights?: string[];
 }
 
 /** A named chat session / conversation thread */

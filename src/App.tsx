@@ -183,17 +183,19 @@ function ChatApp() {
 
     try {
       // 3 — Real API call (wired to FastAPI backend via Vite proxy)
-      const botText = await sendMessage(text, fileContext);
+      const response = await sendMessage(text, fileContext);
 
       // 4 — Bot reply with attached retrieval info (UI demo data)
       const retrievalInfo = makeMockRetrieval(text, fileContext, controls);
       const botMsg: Message = {
         id: uid(),
         role: 'bot',
-        text: botText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text:         response.reply,
+        timestamp:    new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         retrievalInfo,
         outputFormat: controls.outputFormat,
+        vegaSpec:     response.vega_spec,
+        insights:     response.insights,
       };
       appendMessage(capturedId, botMsg);
     } catch (err) {

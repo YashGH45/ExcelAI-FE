@@ -13,11 +13,20 @@ interface UploadResponse {
     size: number;
 }
 
-/** Send a message to FastAPI and return the bot reply */
+/** Structured response from the backend chat endpoint */
+export interface ChatResponse {
+    reply: string;
+    /** Vega-Lite spec — present when the backend generated a chart */
+    vega_spec?: Record<string, unknown>;
+    /** Key insights extracted from the analysis */
+    insights?: string[];
+}
+
+/** Send a message to FastAPI and return the full chat response */
 export const sendMessage = async (
     message: string,
     fileContext: FileContext | null
-): Promise<string> => {
+): Promise<ChatResponse> => {
     const res = await fetch("/api/chat", {           // Vite proxies this to :8000
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,7 +41,11 @@ export const sendMessage = async (
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
     const data = await res.json();
-    return data.reply;
+    return {
+        reply:     data.reply,
+        vega_spec: data.vega_spec  ?? undefined,
+        insights:  data.insights   ?? undefined,
+    };
 };
 
 /** Upload a file to FastAPI */

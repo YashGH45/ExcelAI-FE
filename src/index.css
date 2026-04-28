@@ -1357,3 +1357,74 @@ textarea, input, select { font-family: 'DM Sans', sans-serif; }
   display: flex;
   flex-direction: column;
 }
+
+/* ── Chart (Vega-Lite) ───────────────────────────────────── */
+.chart-wrapper {
+  margin-top: 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-container {
+  width: 100%;
+  padding: 4px 8px 8px;
+}
+
+/* Let vega-embed fill the container width */
+.chart-container .vega-embed {
+  width: 100% !important;
+}
+.chart-container .vega-embed summary {
+  top: 6px !important;
+  right: 6px !important;
+}
+
+/* ── Key Insights panel ──────────────────────────────────── */
+.insights-panel {
+  margin-top: 8px;
+  background: var(--accent-muted);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.insights-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.insights-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insights-list li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  padding-left: 16px;
+  position: relative;
+}
+
+.insights-list li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
