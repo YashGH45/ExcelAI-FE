@@ -1428,3 +1428,137 @@ textarea, input, select { font-family: 'DM Sans', sans-serif; }
   color: var(--accent);
   font-weight: 600;
 }
+
+/* ── Excel file attachment preview ───────────────────────── */
+.excel-preview-wrapper {
+  margin-top: 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.excel-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--accent-muted);
+  border-bottom: 1px solid var(--border-primary);
+  flex-wrap: wrap;
+}
+
+.excel-preview-icon {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.excel-preview-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+}
+
+.excel-preview-sheet {
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  flex-shrink: 0;
+}
+
+.excel-preview-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  flex: 1;
+}
+
+.excel-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--accent);
+  color: var(--btn-send-text);
+  border: none;
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.excel-download-btn:hover {
+  opacity: 0.85;
+}
+
+.excel-preview-loading {
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.excel-table-scroll {
+  overflow-x: auto;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.excel-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+}
+
+.excel-preview-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-sidebar);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-primary);
+  text-align: left;
+  z-index: 1;
+}
+
+.excel-preview-table tbody tr:nth-child(even) {
+  background: var(--bg-hover);
+}
+
+.excel-preview-table tbody td {
+  padding: 5px 12px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.excel-preview-more {
+  padding: 7px 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-sidebar);
+  text-align: center;
+}

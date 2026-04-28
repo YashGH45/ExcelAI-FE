@@ -18,8 +18,10 @@
 // ============================================================
 
 import type { ReactNode } from 'react';
-import { Bot, User, BookOpen, Sparkles } from 'lucide-react';
-import type { Message, RetrievalInfo, OutputFormat } from '../types';
+import { useState, useEffect } from 'react';
+import { Bot, User, BookOpen, Sparkles, Download, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import type { Message, RetrievalInfo, OutputFormat, FileAttachment } from '../types';
 import ChartRenderer from './ChartRenderer';
 
 interface Props {
@@ -98,26 +100,126 @@ function applyOutputFormat(text: string, format: OutputFormat): ReactNode {
   }
 }
 
+// ── Excel / CSV preview ────────────────────────────────────────
+const PREVIEW_ROWS = 6;
+
+type PreviewState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; headers: string[]; rows: (string | number | null)[][]; totalRows: number; sheetName: string };
+
+function ExcelPreview({ attachment }: { attachment: FileAttachment }) {
+  const [preview, setPreview] = useState<PreviewState>({ status: 'loading' });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(attachment.url)
+      .then(r => r.arrayBuffer())
+      .then(buf => {
+        if (cancelled) return;
+        const wb     = XLSX.read(buf, { type: 'array' });
+        const wsName = wb.SheetNames[0];
+        const ws     = wb.Sheets[wsName];
+        const all    = XLSX.utils.sheet_to_json<(string | number | null)[]>(ws, {
+          header: 1, defval: null,
+        });
+        const isCsv = attachment.name.toLowerCase().endsWith('.csv');
+        const [headerRow = [], ...dataRows] = all;
+        setPreview({
+          status:    'ready',
+          headers:   (headerRow as (string | number | null)[]).map(h => String(h ?? '')),
+          rows:      dataRows.slice(0, PREVIEW_ROWS) as (string | number | null)[][],
+          totalRows: Math.max(0, dataRows.length),
+          sheetName: isCsv ? '' : wsName,
+        });
+      })
+      .catch(() => { if (!cancelled) setPreview({ status: 'error' }); });
+    return () => { cancelled = true; };
+  }, [attachment.url, attachment.name]);
+
+  return (
+    <div className="excel-preview-wrapper">
+      {/* Header bar */}
+      <div className="excel-preview-header">
+        <span className="excel-preview-icon"><FileSpreadsheet size={14} /></span>
+        <span className="excel-preview-name">{attachment.name}</span>
+
+        {preview.status === 'ready' && preview.sheetName && (
+          <span className="excel-preview-sheet">{preview.sheetName}</span>
+        )}
+        {preview.status === 'ready' && (
+          <span className="excel-preview-meta">
+            {preview.totalRows.toLocaleString()} row{preview.totalRows !== 1 ? 's' : ''}
+            {preview.headers.length > 0 ? ` · ${preview.headers.length} col${preview.headers.length !== 1 ? 's' : ''}` : ''}
+          </span>
+        )}
+
+        <a
+          className="excel-download-btn"
+          href={attachment.url}
+          download={attachment.name}
+          title={`Download ${attachment.name}`}
+        >
+          <Download size={12} />
+          Download
+        </a>
+      </div>
+
+      {/* Table preview */}
+      {preview.status === 'loading' && (
+        <div className="excel-preview-loading">Loading preview…</div>
+      )}
+      {preview.status === 'error' && (
+        <div className="excel-preview-loading">Preview unavailable</div>
+      )}
+      {preview.status === 'ready' && preview.headers.length > 0 && (
+        <div className="excel-table-scroll">
+          <table className="excel-preview-table">
+            <thead>
+              <tr>{preview.headers.map((h, i) => <th key={i}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {preview.rows.map((row, ri) => (
+                <tr key={ri}>
+                  {preview.headers.map((_, ci) => (
+                    <td key={ci}>{row[ci] != null ? String(row[ci]) : ''}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {preview.totalRows > PREVIEW_ROWS && (
+            <div className="excel-preview-more">
+              +{(preview.totalRows - PREVIEW_ROWS).toLocaleString()} more rows — download to view all
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────
 export default function MessageBubble({ message, onViewSources }: Props) {
   const isUser  = message.role === 'user';
   const fmt     = message.outputFormat ?? 'text';
-  const hasChart = !isUser && !!message.vegaSpec;
+  const hasChart      = !isUser && !!message.vegaSpec;
+  const hasAttachment = !isUser && !!message.fileAttachment;
 
   return (
     <div
       className={`message-row ${isUser ? 'user' : 'bot'}`}
-      style={hasChart ? { alignItems: 'flex-start' } : undefined}
+      style={hasChart || hasAttachment ? { alignItems: 'flex-start' } : undefined}
     >
       {/* Bot avatar — left side */}
       {!isUser && (
-        <div className="message-avatar" style={hasChart ? { marginTop: 6 } : undefined}>
+        <div className="message-avatar" style={hasChart || hasAttachment ? { marginTop: 6 } : undefined}>
           <Bot size={13} />
         </div>
       )}
 
-      {/* Content column — wider when a chart is present */}
-      <div style={{ maxWidth: hasChart ? '90%' : '72%', minWidth: 0, width: hasChart ? '90%' : undefined }}>
+      {/* Content column — wider when a chart or file is present */}
+      <div style={{ maxWidth: hasChart || hasAttachment ? '90%' : '72%', minWidth: 0, width: hasChart || hasAttachment ? '90%' : undefined }}>
 
         {/* Text bubble */}
         <div className={`message-bubble ${isUser ? 'user' : 'bot'}`}>
@@ -129,6 +231,11 @@ export default function MessageBubble({ message, onViewSources }: Props) {
           <div className="chart-wrapper">
             <ChartRenderer spec={message.vegaSpec!} />
           </div>
+        )}
+
+        {/* ── Excel file attachment ────────────────────────── */}
+        {hasAttachment && (
+          <ExcelPreview attachment={message.fileAttachment!} />
         )}
 
         {/* ── Key Insights ─────────────────────────────────── */}

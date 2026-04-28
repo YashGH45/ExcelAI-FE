@@ -20,6 +20,8 @@ export interface ChatResponse {
     vega_spec?: Record<string, unknown>;
     /** Key insights extracted from the analysis */
     insights?: string[];
+    /** Download URL for a file returned by the backend, e.g. "/api/download/result.csv" */
+    download_url?: string;
 }
 
 /** Send a message to FastAPI and return the full chat response */
@@ -42,9 +44,10 @@ export const sendMessage = async (
 
     const data = await res.json();
     return {
-        reply:     data.reply,
-        vega_spec: data.vega_spec  ?? undefined,
-        insights:  data.insights   ?? undefined,
+        reply:        data.reply,
+        vega_spec:    data.vega_spec    ?? undefined,
+        insights:     data.insights     ?? undefined,
+        download_url: data.download_url ?? undefined,
     };
 };
 

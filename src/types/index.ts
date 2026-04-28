@@ -6,6 +6,14 @@
 
 // ── Chat data structures ──────────────────────────────────
 
+/** Spreadsheet file attached to a bot message */
+export interface FileAttachment {
+  /** Filename, e.g. "result.csv" — derived from the URL */
+  name: string;
+  /** Backend download URL, e.g. "/api/download/result.csv" */
+  url: string;
+}
+
 /** A single chat message in a conversation */
 export interface Message {
   id: string;
@@ -20,6 +28,8 @@ export interface Message {
   vegaSpec?: Record<string, unknown>;
   /** Key insights extracted from the data analysis */
   insights?: string[];
+  /** Excel file returned by the backend — triggers preview + download */
+  fileAttachment?: FileAttachment;
 }
 
 /** A named chat session / conversation thread */

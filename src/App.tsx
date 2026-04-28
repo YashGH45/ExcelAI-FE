@@ -31,7 +31,7 @@ import SettingsModal    from './components/SettingsModal';
 import { sendMessage } from './utils/api';
 import type {
   Session, Message, FileContext,
-  PowerControls, RetrievalInfo, RetrievalChunk,
+  PowerControls, RetrievalInfo, RetrievalChunk, FileAttachment,
 } from './types';
 
 // ── Utilities ──────────────────────────────────────────────────
@@ -187,15 +187,26 @@ function ChatApp() {
 
       // 4 — Bot reply with attached retrieval info (UI demo data)
       const retrievalInfo = makeMockRetrieval(text, fileContext, controls);
+
+      const fileAttachment: FileAttachment | undefined =
+        response.download_url
+          ? {
+              // Extract filename from the URL path
+              name: response.download_url.split('/').pop() ?? 'download',
+              url:  response.download_url,
+            }
+          : undefined;
+
       const botMsg: Message = {
         id: uid(),
         role: 'bot',
-        text:         response.reply,
-        timestamp:    new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text:           response.reply,
+        timestamp:      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         retrievalInfo,
-        outputFormat: controls.outputFormat,
-        vegaSpec:     response.vega_spec,
-        insights:     response.insights,
+        outputFormat:   controls.outputFormat,
+        vegaSpec:       response.vega_spec,
+        insights:       response.insights,
+        fileAttachment,
       };
       appendMessage(capturedId, botMsg);
     } catch (err) {
