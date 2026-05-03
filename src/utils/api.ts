@@ -1,5 +1,9 @@
 // utils/api.ts
 
+// Single source of truth for the session identifier sent to every endpoint.
+// The backend uses this to associate uploaded files with chat requests.
+const SESSION_ID = "abc123";
+
 interface FileContext {
     name: string;
     rowCount: number;
@@ -9,8 +13,9 @@ interface FileContext {
 }
 
 interface UploadResponse {
-    filename: string;
-    size: number;
+    filename:   string;
+    rows?:      number;
+    col_count?: number;
 }
 
 /** Structured response from the backend chat endpoint */
@@ -34,7 +39,7 @@ export const sendMessage = async (
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             message,
-            session_id: "abc123",
+            session_id:   fileContext ? SESSION_ID : null,
             file_preview: fileContext?.preview ?? null,
             file_name:    fileContext?.name    ?? null
         }),
@@ -51,16 +56,47 @@ export const sendMessage = async (
     };
 };
 
-/** Upload a file to FastAPI */
-export const uploadFile = async (file: File): Promise<UploadResponse> => {
+/** Upload a file to FastAPI.
+ *  Pass smartParser:true + answers when Smart Parser mode is active. */
+export const uploadFile = async (
+    file: File,
+    options: { smartParser?: boolean; answers?: SmartParserAnswer[] } = {},
+): Promise<UploadResponse> => {
     const form = new FormData();
     form.append("file", file);
+    form.append("session_id", SESSION_ID);
+    form.append("smart_parser", options.smartParser ? "true" : "false");
+    if (options.smartParser && options.answers) {
+        form.append("answers", JSON.stringify(options.answers));
+    }
 
     const res = await fetch("/api/upload", {
         method: "POST",
-        body: form,                                    // no Content-Type header — browser sets it
+        body: form,
     });
 
     if (!res.ok) throw new Error("Upload failed");
     return res.json();
 };
+
+/** A single question returned by the Smart Parser questions endpoint */
+export interface SmartParserQuestion {
+    id: string;
+    label: string;
+    placeholder?: string;
+    required?: boolean;
+}
+
+/** One answer entry — preserves question identity and response order */
+export interface SmartParserAnswer {
+    id: string;
+    answer: string;
+}
+
+/** Fetch the list of questions from the backend */
+export const fetchSmartParserQuestions = async (): Promise<SmartParserQuestion[]> => {
+    const res = await fetch("/api/smart-parser/questions");
+    if (!res.ok) throw new Error("Failed to load questions");
+    return res.json();
+};
+
