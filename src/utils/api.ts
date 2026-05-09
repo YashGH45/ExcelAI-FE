@@ -12,7 +12,7 @@ interface FileContext {
     raw: unknown[][];     // array of rows from SheetJS
 }
 
-interface UploadResponse {
+export interface UploadResponse {
     filename:   string;
     rows?:      number;
     col_count?: number;
@@ -57,18 +57,16 @@ export const sendMessage = async (
 };
 
 /** Upload a file to FastAPI.
- *  Pass smartParser:true + answers when Smart Parser mode is active. */
+ *  Pass smartParser:true when Smart Parser mode is active.
+ *  Answers are submitted separately via submitSmartParserAnswers. */
 export const uploadFile = async (
     file: File,
-    options: { smartParser?: boolean; answers?: SmartParserAnswer[] } = {},
+    options: { smartParser?: boolean } = {},
 ): Promise<UploadResponse> => {
     const form = new FormData();
     form.append("file", file);
     form.append("session_id", SESSION_ID);
     form.append("smart_parser", options.smartParser ? "true" : "false");
-    if (options.smartParser && options.answers) {
-        form.append("answers", JSON.stringify(options.answers));
-    }
 
     const res = await fetch("/api/upload", {
         method: "POST",
@@ -95,8 +93,21 @@ export interface SmartParserAnswer {
 
 /** Fetch the list of questions from the backend */
 export const fetchSmartParserQuestions = async (): Promise<SmartParserQuestion[]> => {
-    const res = await fetch("/api/smart-parser/questions");
+    const res = await fetch(`/api/smart-parser/questions?session_id=${SESSION_ID}`);
     if (!res.ok) throw new Error("Failed to load questions");
+    return res.json();
+};
+
+/** Submit smart parser answers — triggers metadata generation on the backend */
+export const submitSmartParserAnswers = async (
+    answers: SmartParserAnswer[],
+): Promise<{ status: string }> => {
+    const res = await fetch("/api/smart-parser/answers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: SESSION_ID, answers }),
+    });
+    if (!res.ok) throw new Error("Failed to submit answers");
     return res.json();
 };
 

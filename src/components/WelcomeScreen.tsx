@@ -18,8 +18,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { Bot, UploadCloud, MessageSquare, FileSpreadsheet, ArrowLeft, Sparkles } from 'lucide-react';
 import type { FileContext } from '../types';
-import { uploadFile } from '../utils/api';
-import type { SmartParserAnswer } from '../utils/api';
+import { uploadFile, submitSmartParserAnswers } from '../utils/api';
+import type { SmartParserAnswer, UploadResponse } from '../utils/api';
 import SmartParserDialog from './SmartParserDialog';
 
 interface Props {
@@ -32,22 +32,21 @@ type View = 'options' | 'upload';
 const isSpreadsheet = (file: File) => /\.(xlsx|xls|csv)$/i.test(file.name);
 
 export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
-  const [view,            setView]            = useState<View>('options');
-  const [isDragging,      setDrag]            = useState(false);
-  const [isLoading,       setLoading]         = useState(false);
-  const [error,           setError]           = useState<string | null>(null);
-  const [smartParserMode, setSmartParserMode] = useState(false);
-  const [pendingFile,     setPendingFile]     = useState<File | null>(null);
-  const inputRef                              = useRef<HTMLInputElement>(null);
+  const [view,                setView]               = useState<View>('options');
+  const [isDragging,          setDrag]               = useState(false);
+  const [isLoading,           setLoading]            = useState(false);
+  const [error,               setError]              = useState<string | null>(null);
+  const [smartParserMode,     setSmartParserMode]    = useState(false);
+  const [pendingFile,         setPendingFile]        = useState<File | null>(null);
+  const [pendingUploadResult, setPendingUploadResult]= useState<UploadResponse | null>(null);
+  const inputRef                                     = useRef<HTMLInputElement>(null);
 
-  // ── Upload — handles both plain and Smart Parser paths ────
-  const doUpload = useCallback(async (file: File, answers?: SmartParserAnswer[]) => {
+  // ── Step 1 (plain): upload file and finish immediately ────
+  const doUpload = useCallback(async (file: File) => {
     setError(null);
     setLoading(true);
-    const smartParser = smartParserMode && isSpreadsheet(file);
     try {
-      const result = await uploadFile(file, { smartParser, answers });
-      setPendingFile(null);
+      const result = await uploadFile(file, { smartParser: false });
       onFileLoaded({
         name:     result.filename  ?? file.name,
         rowCount: result.rows      ?? 0,
@@ -56,12 +55,42 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
         raw:      [],
       });
     } catch (e) {
-      setPendingFile(null);
       setError((e as Error).message ?? 'Upload failed.');
     } finally {
       setLoading(false);
     }
-  }, [onFileLoaded, smartParserMode]);
+  }, [onFileLoaded]);
+
+  // ── Step 1 (smart): upload file first, then open dialog ───
+  const doSmartUpload = useCallback(async (file: File) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await uploadFile(file, { smartParser: true });
+      setPendingUploadResult(result);
+      setPendingFile(file);
+    } catch (e) {
+      setError((e as Error).message ?? 'Upload failed.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ── Step 3 (smart): submit answers, then finalise session ─
+  const handleSmartParserSubmit = useCallback(async (answers: SmartParserAnswer[]) => {
+    await submitSmartParserAnswers(answers);
+    const result = pendingUploadResult!;
+    const file   = pendingFile!;
+    setPendingFile(null);
+    setPendingUploadResult(null);
+    onFileLoaded({
+      name:     result.filename  ?? file.name,
+      rowCount: result.rows      ?? 0,
+      colCount: result.col_count ?? 0,
+      preview:  '',
+      raw:      [],
+    });
+  }, [pendingUploadResult, pendingFile, onFileLoaded]);
 
   // ── File picked / dropped ──────────────────────────────────
   const handleFile = useCallback((file: File) => {
@@ -70,13 +99,12 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
       setError('Please upload a .xlsx, .xls, .csv, or .pdf file.');
       return;
     }
-    // Smart Parser: intercept spreadsheets and show dialog first
     if (smartParserMode && isSpreadsheet(file)) {
-      setPendingFile(file);
+      doSmartUpload(file);   // upload first, dialog opens after
     } else {
       doUpload(file);
     }
-  }, [smartParserMode, doUpload]);
+  }, [smartParserMode, doUpload, doSmartUpload]);
 
   // ── Drag-and-drop handlers ─────────────────────────────────
   const onDragOver  = (e: React.DragEvent) => { e.preventDefault(); setDrag(true); };
@@ -222,8 +250,8 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
       {pendingFile && (
         <SmartParserDialog
           fileName={pendingFile.name}
-          onSubmit={(answers) => doUpload(pendingFile, answers)}
-          onCancel={() => setPendingFile(null)}
+          onSubmit={handleSmartParserSubmit}
+          onCancel={() => { setPendingFile(null); setPendingUploadResult(null); }}
         />
       )}
     </>
