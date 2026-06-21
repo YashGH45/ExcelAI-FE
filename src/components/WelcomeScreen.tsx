@@ -21,6 +21,7 @@ import type { FileContext } from '../types';
 import { uploadFile, submitSmartParserAnswers } from '../utils/api';
 import type { SmartParserAnswer, UploadResponse } from '../utils/api';
 import SmartParserDialog from './SmartParserDialog';
+import PdfTipsOverlay from './PdfTipsOverlay';
 
 interface Props {
   onFileLoaded: (ctx: FileContext) => void;
@@ -35,6 +36,7 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
   const [view,                setView]               = useState<View>('options');
   const [isDragging,          setDrag]               = useState(false);
   const [isLoading,           setLoading]            = useState(false);
+  const [isPdfUploading,      setIsPdfUploading]     = useState(false);
   const [error,               setError]              = useState<string | null>(null);
   const [smartParserMode,     setSmartParserMode]    = useState(false);
   const [pendingFile,         setPendingFile]        = useState<File | null>(null);
@@ -99,6 +101,7 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
       setError('Please upload a .xlsx, .xls, .csv, or .pdf file.');
       return;
     }
+    setIsPdfUploading(/\.pdf$/i.test(file.name));
     if (smartParserMode && isSpreadsheet(file)) {
       doSmartUpload(file);   // upload first, dialog opens after
     } else {
@@ -254,6 +257,9 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
           onCancel={() => { setPendingFile(null); setPendingUploadResult(null); }}
         />
       )}
+
+      {/* PDF Tips Overlay — shown while a PDF is uploading/parsing */}
+      {isLoading && isPdfUploading && <PdfTipsOverlay />}
     </>
   );
 }

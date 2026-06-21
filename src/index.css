@@ -1697,3 +1697,120 @@ textarea, input, select { font-family: 'DM Sans', sans-serif; }
   background: var(--bg-sidebar);
   text-align: center;
 }
+
+/* ── PDF Tips Overlay ────────────────────────────────────── */
+.pdf-tips-card {
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  text-align: center;
+  padding-top: 0;
+  overflow: hidden;
+}
+.pdf-tips-progress-bar {
+  height: 3px;
+  background: var(--border-light);
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+.pdf-tips-progress-fill {
+  height: 100%;
+  width: 30%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: pdfProgressSlide 1.8s ease-in-out infinite;
+}
+@keyframes pdfProgressSlide {
+  0%   { transform: translateX(-100%); width: 30%; }
+  50%  { width: 45%; }
+  100% { transform: translateX(400%); width: 30%; }
+}
+.pdf-tips-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  text-align: left;
+  padding: 0 28px;
+}
+.pdf-tips-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+.pdf-tips-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  border-top-color: var(--accent);
+  animation: spin 1.1s linear infinite;
+}
+.pdf-tips-subhead {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+}
+.pdf-tips-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 0 28px 22px 28px;
+}
+.pdf-tip-body {
+  padding: 0 28px 18px 28px;
+}
+.pdf-tip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 14px;
+  font-family: 'DM Sans', sans-serif;
+}
+.pdf-tip-emoji {
+  font-size: 34px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.pdf-tip-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  font-family: 'DM Sans', sans-serif;
+}
+.pdf-tip-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+}
+.pdf-tips-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 28px 28px 28px;
+}
+.pdf-tips-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-primary);
+  transition: background 0.3s ease, transform 0.3s ease;
+  display: inline-block;
+}
+.pdf-tips-dot.active {
+  background: var(--accent);
+  transform: scale(1.4);
+}
