@@ -1,0 +1,9 @@
+FILE: src/components/ChartRenderer.tsx
+PURPOSE: Renders a Vega-Lite specification passed as a prop using vega-embed; reads live CSS custom properties to theme the chart to match the active colour mode.
+COMPONENT: ChartRenderer
+PROPS: spec
+HOOKS: useEffect (×1), useRef (×1), useTheme (custom — from ThemeContext)
+RENDERS: (single div container only)
+USED_BY: src/components/MessageBubble.tsx
+CONTEXT: reads ThemeContext (isDark — triggers re-render on mode change)
+STYLES: src/index.css (chart-container) — also reads CSS vars at runtime via getComputedStyle

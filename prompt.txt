@@ -1,0 +1,112 @@
+You are setting up a Token Shield pipeline for this React + Vite repository.
+Your goal is to build a 3-stage context compression system so that future
+Claude sessions consume the minimum possible tokens when working in this codebase.
+
+Do NOT open or read every file. Use `find`, `ls`, and targeted reads only.
+
+---
+
+## STAGE 1 — BUILD: Graphify
+
+1. Run: `find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.jsx" -o -name "*.js" \
+     -o -name "*.css" -o -name "*.scss" -o -name "*.json" \) \
+     ! -path "./.git/*" ! -path "./node_modules/*" ! -path "./dist/*" ! -path "./.vite/*"`
+
+2. For each .tsx / .jsx component file found, extract:
+   - Component name and its one-line purpose
+   - Props interface / type (names only, not full types)
+   - Other components it imports and renders
+   - Hooks used (custom or React built-ins)
+   - State management slice / store it reads from (if any)
+
+3. For each .ts / .js utility/service file found, extract:
+   - Exported function names and signatures
+   - What it imports from (other project files + key libraries)
+
+4. Note any route definitions found (React Router, TanStack Router, etc.)
+
+5. Write this as a JSON knowledge graph to: `graphify-out/graph.json`
+   Schema:
+```json
+   {
+     "nodes": [
+       { "id": "src/components/UserCard.tsx", "type": "component",
+         "defines": ["UserCard"],
+         "props": ["userId", "onSelect", "variant"],
+         "purpose": "Displays a single user summary card" }
+     ],
+     "edges": [
+       { "from": "src/pages/UsersPage.tsx",
+         "to": "src/components/UserCard.tsx", "relationship": "renders" },
+       { "from": "src/components/UserCard.tsx",
+         "to": "src/store/userSlice.ts", "relationship": "reads-store" }
+     ]
+   }
+```
+
+---
+
+## STAGE 2 — COMPRESS: Graph-RAG
+
+Create a `.codebase_context/` directory at the project root.
+
+1. Generate `.codebase_context/INDEX.meta`
+   - One line per file in the format:
+     `<relative_path> | <type> | <one-line purpose> | <key symbols (comma-separated, max 5)>`
+   - Keep the entire file under 6 KB total.
+   - Group lines by category with a comment header:
+     `# PAGES`, `# COMPONENTS`, `# HOOKS`, `# STORE`, `# SERVICES`, `# UTILS`
+   - Example:
+   # PAGES
+    src/pages/UsersPage.tsx | page | Lists all users with search/filter | UsersPage, useUserSearch
+    # COMPONENTS
+    src/components/UserCard.tsx | component | Single user summary card | UserCard, userId, onSelect
+
+
+2. For every component / page file, generate `.codebase_context/metadata/<filepath>.meta`
+    - Format (plain text, keep under 300 tokens each):
+
+FILE: src/components/UserCard.tsx
+  PURPOSE: Displays a single user summary card with avatar and role badge
+  COMPONENT: UserCard
+  PROPS: userId (string), onSelect (fn), variant ("compact"|"full")
+  HOOKS: useUser(userId), useState, useCallback
+  RENDERS: Avatar, RoleBadge, Button
+  USED_BY: src/pages/UsersPage.tsx, src/components/UserList.tsx
+  STORE: reads userSlice.selectUserById
+  STYLES: UserCard.module.css
+
+
+3. For hooks and service files, generate `.meta` files listing:
+   - What the hook/service does, parameters, return shape, and which components use it.
+
+4. Generate `.codebase_context/ROUTES.meta` listing every route:
+/ → src/pages/HomePage.tsx
+/users → src/pages/UsersPage.tsx
+/users/:id → src/pages/UserDetailPage.tsx
+
+
+---
+
+## STAGE 4 — Generate CLAUDE.md
+
+Finally, create a `CLAUDE.md` file at the project root (see separate template).
+Populate it with:
+- Project name and stack (React version, Vite version, key libraries)
+- Entry point (main.tsx → App.tsx)
+- Route map (from ROUTES.meta)
+- Key directories and what lives in each
+- The 5 most important components/pages
+- State management approach and store location
+- API base URL / environment variables (from .env.example or vite.config.ts)
+- Test commands found (vitest, jest, playwright, etc.)
+- Build command and output directory
+
+When all files are written, print a summary:
+- How many nodes in graph.json
+- How many .meta files created
+- Size of INDEX.meta
+- Confirm CLAUDE.md and ROUTES.meta exist
+
+Do not open any raw source file unless it is impossible to determine the above
+information from file names, imports, and the top 20 lines only.c

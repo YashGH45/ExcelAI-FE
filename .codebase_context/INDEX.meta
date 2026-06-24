@@ -1,0 +1,37 @@
+# PAGES
+# (No router — App.tsx renders components directly; see ROUTES.meta)
+
+# COMPONENTS
+src/App.tsx | component | Root component; owns all session/message state; wraps app in ThemeProvider | App, ChatApp, useState, useEffect, sendMessage
+src/components/Sidebar.tsx | component | Collapsible left panel listing all chat sessions | Sidebar, Session, sessions, activeId, isOpen
+src/components/TopBar.tsx | component | Header bar with sidebar toggle, theme switch, and settings button | TopBar, useTheme, sidebarOpen, sessionName, fileName
+src/components/WelcomeScreen.tsx | component | Initial screen; handles file upload, Smart Parser toggle, drag-drop | WelcomeScreen, SmartParserDialog, PdfTipsOverlay, uploadFile
+src/components/MessageBubble.tsx | component | Renders a chat message with markdown, charts, Excel preview, insights | MessageBubble, ExcelPreview, ChartRenderer, applyOutputFormat
+src/components/TypingIndicator.tsx | component | Animated three-dot bot-thinking indicator | TypingIndicator
+src/components/ChatInput.tsx | component | Bottom input bar with power controls and output format pills | ChatInput, PowerControls, OutputFormat, onSend
+src/components/RetrievalPanel.tsx | component | Right drawer showing retrieved source chunks with scores | RetrievalPanel, ChunkCard, HighlightedText, RetrievalInfo
+src/components/FileContextBadge.tsx | component | Thin bar showing attached file name and row/col count | FileContextBadge, FileContext, onRemove
+src/components/SettingsModal.tsx | component | Appearance modal for toggling mode and choosing colour theme | SettingsModal, useTheme, LIGHT_THEMES, DARK_THEMES
+src/components/ChartRenderer.tsx | component | Renders Vega-Lite spec via vega-embed with theme-aware styling | ChartRenderer, useTheme, vega-embed, spec
+src/components/SmartParserDialog.tsx | component | Modal for fetching and answering backend Smart Parser questions | SmartParserDialog, fetchSmartParserQuestions, SmartParserAnswer
+src/components/PdfTipsOverlay.tsx | component | Full-screen loading overlay with rotating tips during PDF upload | PdfTipsOverlay, useState, useEffect
+
+# HOOKS
+# (No custom hooks — ThemeContext exports useTheme as a context-accessor hook)
+
+# STORE
+src/context/ThemeContext.tsx | context | Provides mode, colorTheme, isDark, toggleMode, setColorTheme via React context | ThemeProvider, useTheme, ThemeContextValue, localStorage
+
+# SERVICES
+src/utils/api.ts | service | All fetch calls to FastAPI backend (chat, upload, smart parser) | sendMessage, uploadFile, fetchSmartParserQuestions, submitSmartParserAnswers
+
+# UTILS
+# (No standalone utility files beyond api.ts)
+
+# STYLES
+src/styles/themes.ts | util | Theme metadata arrays and CSS key builder for SettingsModal and ThemeContext | LIGHT_THEMES, DARK_THEMES, buildThemeKey, ThemeOption
+src/index.css | style | Global stylesheet with all CSS custom properties and component classes | theme tokens, layout classes, animations, component styles
+src/App.css | style | Legacy file; no longer active — all styles moved to index.css | (empty)
+
+# TYPES
+src/types/index.ts | types | All shared TypeScript interfaces and type aliases | Message, Session, FileContext, RetrievalInfo, PowerControls, SearchMode

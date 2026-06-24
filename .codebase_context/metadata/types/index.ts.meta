@@ -1,0 +1,18 @@
+FILE: src/types/index.ts
+PURPOSE: Central TypeScript type definitions shared across all components and utilities.
+EXPORTS:
+  FileAttachment — { name, url } for backend-returned downloadable files
+  Message — chat message with id, role, text, timestamp, and optional retrievalInfo/vegaSpec/insights/fileAttachment
+  Session — chat session with id, name, messages array, and nullable fileContext
+  FileContext — parsed spreadsheet metadata (name, rowCount, colCount, preview, raw)
+  RetrievalChunk — single retrieved passage with score, rank, source, matchedTerms
+  RetrievalInfo — retrieval result set with chunks, searchMode, topK, totalSearched
+  PowerControls — user retrieval/generation settings (topK, strictMode, searchMode, outputFormat)
+  SearchMode — 'semantic' | 'keyword'
+  OutputFormat — 'text' | 'bullets' | 'table' | 'raw'
+  ThemeMode — 'light' | 'dark'
+  LightTheme — 'sand' | 'sky' | 'mint' | 'rose'
+  DarkTheme — 'midnight' | 'ocean' | 'forest' | 'volcanic'
+  ColorTheme — LightTheme | DarkTheme
+IMPORTS: none
+USED_BY: src/App.tsx, src/context/ThemeContext.tsx, src/styles/themes.ts, src/components/Sidebar.tsx, src/components/ChatInput.tsx, src/components/MessageBubble.tsx, src/components/RetrievalPanel.tsx, src/components/FileContextBadge.tsx, src/components/SettingsModal.tsx

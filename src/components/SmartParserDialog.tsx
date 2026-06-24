@@ -35,6 +35,7 @@ export default function SmartParserDialog({ fileName, onSubmit, onCancel }: Prop
   const [fetchError,   setFetchError]   = useState<string | null>(null);
   const [answers,      setAnswers]      = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError,  setSubmitError]  = useState<string | null>(null);
 
   // ── Fetch questions from backend on mount ──────────────────
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function SmartParserDialog({ fileName, onSubmit, onCancel }: Prop
     e.preventDefault();
     if (!questions) return;
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       // Build ordered answer array preserving question IDs
       const payload: SmartParserAnswer[] = questions.map((q, i) => ({
@@ -65,6 +67,8 @@ export default function SmartParserDialog({ fileName, onSubmit, onCancel }: Prop
         answer: answers[i] ?? '',
       }));
       await onSubmit(payload);
+    } catch (err) {
+      setSubmitError((err as Error).message ?? 'Failed to submit answers.');
     } finally {
       setIsSubmitting(false);
     }
@@ -127,6 +131,10 @@ export default function SmartParserDialog({ fileName, onSubmit, onCancel }: Prop
                 />
               </div>
             ))}
+
+            {submitError && (
+              <p className="uploader-error" style={{ marginBottom: 12 }}>{submitError}</p>
+            )}
 
             <div className="sp-dialog-actions">
               <button

@@ -1,0 +1,9 @@
+FILE: src/components/SmartParserDialog.tsx
+PURPOSE: Modal dialog that fetches dynamic questions from the backend on mount, renders them as text inputs, and submits ordered answers back to the parent on form submit.
+COMPONENT: SmartParserDialog
+PROPS: fileName, onSubmit, onCancel
+HOOKS: useState (×4), useEffect (×1)
+RENDERS: (native elements only — div, form, label, input, button)
+USED_BY: src/components/WelcomeScreen.tsx
+CONTEXT: none
+STYLES: src/index.css (modal-backdrop, modal-card, sp-dialog, sp-dialog-intro, sp-dialog-field, sp-dialog-label, sp-required, sp-dialog-input, sp-dialog-actions, sp-submit-btn, sp-dialog-loading, sp-spinner)

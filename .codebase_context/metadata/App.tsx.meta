@@ -1,0 +1,9 @@
+FILE: src/App.tsx
+PURPOSE: Root component; owns all chat session and message state; coordinates every major UI region; wraps the inner ChatApp in ThemeProvider.
+COMPONENT: App (wrapper), ChatApp (inner stateful component)
+PROPS: none (root)
+HOOKS: useState (×7), useEffect (×2), useRef (×2), useCallback (×2), useMemo (×1)
+RENDERS: ThemeProvider, Sidebar, TopBar, FileContextBadge, WelcomeScreen, MessageBubble, TypingIndicator, ChatInput, RetrievalPanel, SettingsModal
+USED_BY: src/main.tsx
+CONTEXT: wraps with ThemeProvider (does not read context itself)
+STYLES: src/index.css (app-shell, app-main, chat-messages, messages-area, scroll-bottom-btn, empty-hint, message-row)

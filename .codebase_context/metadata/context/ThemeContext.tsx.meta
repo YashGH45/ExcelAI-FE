@@ -1,0 +1,13 @@
+FILE: src/context/ThemeContext.tsx
+PURPOSE: Provides app-wide theme state (light/dark mode + colour variant) via React context; persists preference to localStorage and applies data-theme attribute to <html>.
+CONTEXT SHAPE (ThemeContextValue):
+  mode: ThemeMode           — 'light' | 'dark'
+  colorTheme: ColorTheme    — active colour name (e.g. 'sand', 'midnight')
+  isDark: boolean           — convenience derived from mode
+  toggleMode: () => void    — toggles light/dark, resets colour to that mode's default
+  setColorTheme: (theme: ColorTheme) => void — updates colour and persists to localStorage
+COMPONENT: ThemeProvider ({ children })
+HOOK EXPORTED: useTheme() → ThemeContextValue
+HOOKS USED: useState (×2), useEffect (×1), useContext (×1)
+IMPORTS: src/types/index.ts (ThemeMode, ColorTheme, LightTheme, DarkTheme), src/styles/themes.ts (buildThemeKey)
+USED_BY: src/App.tsx (wraps), src/components/TopBar.tsx, src/components/SettingsModal.tsx, src/components/ChartRenderer.tsx

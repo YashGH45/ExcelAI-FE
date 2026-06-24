@@ -1,0 +1,10 @@
+FILE: src/utils/api.ts
+PURPOSE: Single module for all HTTP calls to the FastAPI backend; proxied through Vite dev server at /api/*.
+EXPORTS:
+  sendMessage(message: string, fileContext: FileContext | null) → Promise<ChatResponse>
+  uploadFile(file: File, options?: { smartParser?: boolean }) → Promise<UploadResponse>
+  fetchSmartParserQuestions() → Promise<SmartParserQuestion[]>
+  submitSmartParserAnswers(answers: SmartParserAnswer[]) → Promise<{ status: string }>
+INTERFACES EXPORTED: UploadResponse, ChatResponse, SmartParserQuestion, SmartParserAnswer
+IMPORTS: (no external imports — uses native fetch API only)
+USED_BY: src/App.tsx, src/components/WelcomeScreen.tsx, src/components/SmartParserDialog.tsx

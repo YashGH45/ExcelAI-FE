@@ -1,0 +1,9 @@
+FILE: src/components/TopBar.tsx
+PURPOSE: Top header bar showing sidebar toggle, app title, active session/file name, dark-mode quick toggle, and settings gear.
+COMPONENT: TopBar
+PROPS: sidebarOpen, onToggleSidebar, sessionName, fileName, onOpenSettings
+HOOKS: useTheme (custom — from ThemeContext)
+RENDERS: (native elements only — header, button, span)
+USED_BY: src/App.tsx
+CONTEXT: reads ThemeContext (isDark, toggleMode)
+STYLES: src/index.css (top-bar, top-bar-left, top-bar-right, top-bar-title, top-bar-session, icon-btn)

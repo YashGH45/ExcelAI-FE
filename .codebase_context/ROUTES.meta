@@ -1,0 +1,12 @@
+# No router detected — App.tsx renders components directly
+
+There is no React Router or any other routing library installed.
+App.tsx is the single root component. It manages "view state" through:
+
+  showWelcome (boolean)     — shows WelcomeScreen vs message list
+  settingsOpen (boolean)    — shows SettingsModal overlay
+  openRetrieval (object)    — shows RetrievalPanel side drawer
+  activeId (string)         — which session is active in the Sidebar
+
+All navigation is controlled by local state in App.tsx / ChatApp().
+No URL-based routing exists in this codebase.

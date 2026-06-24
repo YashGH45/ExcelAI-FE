@@ -1,0 +1,9 @@
+FILE: src/components/SettingsModal.tsx
+PURPOSE: Appearance settings modal with light/dark mode toggle switch and a colour-theme swatch grid that updates instantly via ThemeContext.
+COMPONENT: SettingsModal
+PROPS: onClose
+HOOKS: useTheme (custom — from ThemeContext)
+RENDERS: (native elements only — div, button, span)
+USED_BY: src/App.tsx
+CONTEXT: reads ThemeContext (isDark, colorTheme, toggleMode, setColorTheme)
+STYLES: src/index.css (modal-backdrop, modal-card, modal-header, modal-title, settings-section, settings-section-label, mode-toggle-row, mode-toggle-label, toggle-switch, theme-grid, theme-swatch, theme-swatch-wrap, swatch-bg, swatch-accent, swatch-name)

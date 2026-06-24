@@ -1,0 +1,9 @@
+FILE: src/components/TypingIndicator.tsx
+PURPOSE: Animated three-dot "bot is thinking" indicator rendered in the message list while isTyping is true.
+COMPONENT: TypingIndicator
+PROPS: none
+HOOKS: none
+RENDERS: (native span elements only)
+USED_BY: src/App.tsx
+CONTEXT: none
+STYLES: src/index.css (typing-dots, typing-dot — blink keyframe animation)

@@ -1,0 +1,9 @@
+FILE: src/main.tsx
+PURPOSE: React application entry point; creates the root DOM node and renders App inside StrictMode.
+COMPONENT: (entry, no component defined here)
+PROPS: n/a
+HOOKS: none
+RENDERS: App
+USED_BY: index.html (Vite entry)
+CONTEXT: none
+STYLES: src/index.css (imported globally here)
