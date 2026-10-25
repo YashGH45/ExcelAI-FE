@@ -1,0 +1,9 @@
+FILE: src/components/FileContextBadge.tsx
+PURPOSE: Thin info bar displayed below TopBar when a file is attached to the session; shows file name, row and column counts, and a remove button.
+COMPONENT: FileContextBadge
+PROPS: fileContext, onRemove
+HOOKS: none
+RENDERS: (native elements only — div, span, button)
+USED_BY: src/App.tsx
+CONTEXT: none
+STYLES: src/index.css (file-badge, file-badge-text, icon-btn)

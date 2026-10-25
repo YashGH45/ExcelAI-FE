@@ -1,0 +1,183 @@
+# Frontend Task: Implement Interactive PDF Evidence Viewer (Inspect Before Modifying)
+
+## Objective
+
+Extend the existing frontend so users can see exactly where an AI-generated answer originated inside the uploaded PDF.
+
+**IMPORTANT:** Before making any UI changes, inspect the current implementation.
+
+Do **not** redesign or replace existing layouts if similar functionality already exists.
+
+Only implement the missing features.
+
+---
+
+## Phase 1 — Inspect Current UI
+
+Determine whether the application already contains:
+
+* PDF viewer
+* Source section
+* Right-side document panel
+* Page navigation
+* Zoom controls
+* Scroll-to-page functionality
+* Highlight overlay
+
+Reuse existing components whenever possible.
+
+---
+
+## Phase 2 — Backend Integration
+
+Inspect the backend response.
+
+If evidence metadata already exists, consume it.
+
+Otherwise integrate with the new backend response.
+
+Do not modify unrelated API calls.
+
+---
+
+## Phase 3 — Sources Panel
+
+Create a Sources section associated with every AI response.
+
+Each source card should display:
+
+* Page number
+* Section heading (if available)
+* Similarity/confidence score
+* Small preview of supporting text
+
+Selecting a source should:
+
+* Open the PDF viewer
+* Navigate to the correct page
+* Scroll smoothly
+* Highlight the referenced text
+* Briefly animate or flash the highlight
+
+---
+
+## Phase 4 — PDF Viewer
+
+If a PDF viewer already exists:
+
+Extend it.
+
+Otherwise create one.
+
+Required capabilities:
+
+* Smooth scrolling
+* Zoom in/out
+* Page navigation
+* Jump to page
+* Responsive layout
+
+---
+
+## Phase 5 — Highlight Layer
+
+Implement a highlight overlay using the bounding boxes returned by the backend.
+
+Highlights should:
+
+* Overlay the PDF
+* Support multiple highlighted regions
+* Stay correctly aligned while zooming
+* Update while scrolling
+* Be semi-transparent
+* Not permanently modify the PDF
+
+If coordinates are unavailable, highlight the entire page as a fallback.
+
+---
+
+## Phase 6 — User Interaction
+
+Clicking a source card should:
+
+* Navigate to the relevant page
+* Automatically scroll into view
+* Display the highlighted region
+
+If multiple evidence items exist:
+
+* Highlight all supporting regions
+* Emphasize the selected one
+
+Future-proof the implementation so sentence-level citations can be supported later.
+
+---
+
+## Phase 7 — Performance
+
+Do not reload the PDF every time a source is selected.
+
+Cache:
+
+* PDF document
+* Rendered pages
+* Highlight overlays
+
+If the current viewer supports virtualization, preserve it.
+
+Render only visible pages when appropriate.
+
+---
+
+## Phase 8 — Error Handling
+
+Gracefully handle:
+
+* Missing coordinates
+* Missing pages
+* Invalid evidence
+* Empty evidence arrays
+* OCR PDFs with approximate coordinates
+
+Never allow evidence rendering failures to break the PDF viewer.
+
+---
+
+## Phase 9 — UI Consistency
+
+Maintain the current design language.
+
+Reuse existing:
+
+* Components
+* Colors
+* Typography
+* Buttons
+* Layout
+* Theme
+
+Do not redesign the application unless absolutely required.
+
+---
+
+## Phase 10 — Code Quality
+
+Before implementing anything, inspect whether similar functionality already exists.
+
+If it does:
+
+Reuse and extend it.
+
+Avoid:
+
+* unnecessary refactoring
+* duplicate components
+* replacing existing viewers
+* breaking current workflows
+
+The final experience should allow a user to ask a question, receive answer, view the supporting sources, click a source, and instantly navigate to the exact highlighted location inside the PDF without disrupting the existing application.
+
+
+Note :- take the dto field names for reference and go ahead with existing ones so as to not break the flow in backend
+
+Also ChatResponse.evidence — array of evidence objects. Each item maps 1:1 to the corresponding sources entry and gives you bounding_boxes for PDF-viewer highlighting and character_offsets for text-position navigation.

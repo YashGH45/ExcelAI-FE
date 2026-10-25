@@ -1,0 +1,9 @@
+FILE: src/components/RetrievalPanel.tsx
+PURPOSE: Right-side fixed drawer showing retrieved source chunks for an inspected bot message; displays rank, source, similarity score bar, matched term highlights, and chunk text.
+COMPONENT: RetrievalPanel (default), ChunkCard (internal), HighlightedText (internal)
+PROPS: info, onClose
+HOOKS: none
+RENDERS: (native elements only)
+USED_BY: src/App.tsx
+CONTEXT: none
+STYLES: src/index.css (retrieval-panel, retrieval-header, retrieval-title, retrieval-meta, meta-badge, retrieval-chunks, chunk-card, chunk-header, chunk-source, chunk-score, score-high, score-mid, score-low, score-bar-track, score-bar-fill, chunk-text, rank-badge)

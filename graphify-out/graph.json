@@ -1,0 +1,177 @@
+{
+  "nodes": [
+    {
+      "id": "src/main.tsx",
+      "type": "entry",
+      "defines": ["main"],
+      "props": [],
+      "purpose": "React root entry point; mounts App inside StrictMode"
+    },
+    {
+      "id": "src/App.tsx",
+      "type": "component",
+      "defines": ["App", "ChatApp"],
+      "props": [],
+      "purpose": "Root component; owns all session/message state; wraps app in ThemeProvider"
+    },
+    {
+      "id": "src/context/ThemeContext.tsx",
+      "type": "context",
+      "defines": ["ThemeProvider", "useTheme"],
+      "props": ["children"],
+      "purpose": "Provides light/dark mode and colour theme state to entire app via React context"
+    },
+    {
+      "id": "src/components/Sidebar.tsx",
+      "type": "component",
+      "defines": ["Sidebar"],
+      "props": ["sessions", "activeId", "isOpen", "onSelect", "onCreate", "onDelete"],
+      "purpose": "Collapsible left panel listing all chat sessions"
+    },
+    {
+      "id": "src/components/TopBar.tsx",
+      "type": "component",
+      "defines": ["TopBar"],
+      "props": ["sidebarOpen", "onToggleSidebar", "sessionName", "fileName", "onOpenSettings"],
+      "purpose": "Header bar with sidebar toggle, app title, theme switch, and settings button"
+    },
+    {
+      "id": "src/components/WelcomeScreen.tsx",
+      "type": "component",
+      "defines": ["WelcomeScreen"],
+      "props": ["onFileLoaded", "onSkip"],
+      "purpose": "Initial screen for new sessions; handles file upload, Smart Parser toggle, and drag-drop"
+    },
+    {
+      "id": "src/components/MessageBubble.tsx",
+      "type": "component",
+      "defines": ["MessageBubble", "ExcelPreview"],
+      "props": ["message", "onViewSources"],
+      "purpose": "Renders a single chat message with markdown, charts, Excel preview, insights, and sources button"
+    },
+    {
+      "id": "src/components/TypingIndicator.tsx",
+      "type": "component",
+      "defines": ["TypingIndicator"],
+      "props": [],
+      "purpose": "Animated three-dot indicator shown while the bot is generating a reply"
+    },
+    {
+      "id": "src/components/ChatInput.tsx",
+      "type": "component",
+      "defines": ["ChatInput"],
+      "props": ["onSend", "disabled"],
+      "purpose": "Bottom input bar with auto-growing textarea, power controls panel, and output format pills"
+    },
+    {
+      "id": "src/components/RetrievalPanel.tsx",
+      "type": "component",
+      "defines": ["RetrievalPanel", "ChunkCard", "HighlightedText"],
+      "props": ["info", "onClose"],
+      "purpose": "Right-side drawer showing retrieved source chunks with scores and term highlights"
+    },
+    {
+      "id": "src/components/FileContextBadge.tsx",
+      "type": "component",
+      "defines": ["FileContextBadge"],
+      "props": ["fileContext", "onRemove"],
+      "purpose": "Thin info bar showing the attached file name, row/col count, and a remove button"
+    },
+    {
+      "id": "src/components/SettingsModal.tsx",
+      "type": "component",
+      "defines": ["SettingsModal"],
+      "props": ["onClose"],
+      "purpose": "Appearance modal for toggling light/dark mode and selecting colour themes"
+    },
+    {
+      "id": "src/components/ChartRenderer.tsx",
+      "type": "component",
+      "defines": ["ChartRenderer"],
+      "props": ["spec"],
+      "purpose": "Renders a Vega-Lite spec via vega-embed, theme-aware via CSS variable inspection"
+    },
+    {
+      "id": "src/components/SmartParserDialog.tsx",
+      "type": "component",
+      "defines": ["SmartParserDialog"],
+      "props": ["fileName", "onSubmit", "onCancel"],
+      "purpose": "Modal that fetches and renders dynamic backend questions before Smart Parser upload"
+    },
+    {
+      "id": "src/components/PdfTipsOverlay.tsx",
+      "type": "component",
+      "defines": ["PdfTipsOverlay"],
+      "props": [],
+      "purpose": "Full-screen loading overlay shown while a PDF is uploading; rotates tip cards"
+    },
+    {
+      "id": "src/utils/api.ts",
+      "type": "service",
+      "defines": ["sendMessage", "uploadFile", "fetchSmartParserQuestions", "submitSmartParserAnswers"],
+      "props": [],
+      "purpose": "All fetch calls to the FastAPI backend (chat, upload, smart parser endpoints)"
+    },
+    {
+      "id": "src/types/index.ts",
+      "type": "types",
+      "defines": ["FileAttachment", "Message", "Session", "FileContext", "RetrievalChunk", "RetrievalInfo", "PowerControls", "SearchMode", "OutputFormat", "ThemeMode", "LightTheme", "DarkTheme", "ColorTheme"],
+      "props": [],
+      "purpose": "All shared TypeScript interfaces and type aliases for the app"
+    },
+    {
+      "id": "src/styles/themes.ts",
+      "type": "util",
+      "defines": ["LIGHT_THEMES", "DARK_THEMES", "buildThemeKey", "ThemeOption"],
+      "props": [],
+      "purpose": "Theme metadata arrays and key builder used by SettingsModal and ThemeContext"
+    },
+    {
+      "id": "src/index.css",
+      "type": "style",
+      "defines": ["global styles", "CSS custom properties", "theme tokens", "component classes"],
+      "props": [],
+      "purpose": "Global stylesheet defining all theme CSS variables, layout classes, and component styles"
+    },
+    {
+      "id": "src/App.css",
+      "type": "style",
+      "defines": [],
+      "props": [],
+      "purpose": "Legacy App.css; no longer active — retained as reference comment only"
+    }
+  ],
+  "edges": [
+    { "from": "src/main.tsx",                      "to": "src/App.tsx",                          "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/context/ThemeContext.tsx",          "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/Sidebar.tsx",            "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/TopBar.tsx",             "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/WelcomeScreen.tsx",      "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/MessageBubble.tsx",      "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/TypingIndicator.tsx",    "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/ChatInput.tsx",          "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/RetrievalPanel.tsx",     "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/FileContextBadge.tsx",   "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/components/SettingsModal.tsx",      "relationship": "renders" },
+    { "from": "src/App.tsx",                        "to": "src/utils/api.ts",                      "relationship": "imports" },
+    { "from": "src/App.tsx",                        "to": "src/types/index.ts",                    "relationship": "imports" },
+    { "from": "src/components/TopBar.tsx",          "to": "src/context/ThemeContext.tsx",          "relationship": "reads-context" },
+    { "from": "src/components/SettingsModal.tsx",   "to": "src/context/ThemeContext.tsx",          "relationship": "reads-context" },
+    { "from": "src/components/ChartRenderer.tsx",   "to": "src/context/ThemeContext.tsx",          "relationship": "reads-context" },
+    { "from": "src/components/MessageBubble.tsx",   "to": "src/components/ChartRenderer.tsx",      "relationship": "renders" },
+    { "from": "src/components/WelcomeScreen.tsx",   "to": "src/components/SmartParserDialog.tsx",  "relationship": "renders" },
+    { "from": "src/components/WelcomeScreen.tsx",   "to": "src/components/PdfTipsOverlay.tsx",     "relationship": "renders" },
+    { "from": "src/components/WelcomeScreen.tsx",   "to": "src/utils/api.ts",                      "relationship": "imports" },
+    { "from": "src/components/SmartParserDialog.tsx","to": "src/utils/api.ts",                     "relationship": "imports" },
+    { "from": "src/components/SettingsModal.tsx",   "to": "src/styles/themes.ts",                  "relationship": "imports" },
+    { "from": "src/context/ThemeContext.tsx",        "to": "src/styles/themes.ts",                  "relationship": "imports" },
+    { "from": "src/context/ThemeContext.tsx",        "to": "src/types/index.ts",                    "relationship": "imports" },
+    { "from": "src/styles/themes.ts",               "to": "src/types/index.ts",                    "relationship": "imports" },
+    { "from": "src/components/Sidebar.tsx",          "to": "src/types/index.ts",                   "relationship": "imports" },
+    { "from": "src/components/FileContextBadge.tsx", "to": "src/types/index.ts",                   "relationship": "imports" },
+    { "from": "src/components/MessageBubble.tsx",    "to": "src/types/index.ts",                   "relationship": "imports" },
+    { "from": "src/components/RetrievalPanel.tsx",   "to": "src/types/index.ts",                   "relationship": "imports" },
+    { "from": "src/components/ChatInput.tsx",        "to": "src/types/index.ts",                   "relationship": "imports" },
+    { "from": "src/components/SettingsModal.tsx",    "to": "src/types/index.ts",                   "relationship": "imports" }
+  ]
+}

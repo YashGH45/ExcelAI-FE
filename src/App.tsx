@@ -29,15 +29,54 @@ import FileContextBadge from './components/FileContextBadge';
 import SettingsModal    from './components/SettingsModal';
 
 import { sendMessage } from './utils/api';
+import type { BackendSource, BackendEvidence } from './utils/api';
 import type {
   Session, Message, FileContext,
-  PowerControls, RetrievalInfo, RetrievalChunk,
+  PowerControls, RetrievalInfo, RetrievalChunk, FileAttachment, BoundingBox,
 } from './types';
+import PdfViewer from './components/PdfViewer';
 
 // ── Utilities ──────────────────────────────────────────────────
 
 /** Compact unique ID generator — swap for `uuid` in production */
 const uid = () => Math.random().toString(36).slice(2, 9);
+
+/**
+ * Normalise backend source objects into the frontend RetrievalChunk shape.
+ * Handles snake_case → camelCase and fills in safe defaults.
+ * `evidence` maps 1:1 to `sources` and carries bounding boxes for the PDF viewer.
+ */
+function mapSources(
+  sources: BackendSource[],
+  evidence: (BackendEvidence | null)[] | undefined,
+  searchMode: PowerControls['searchMode'],
+  topK: number,
+): RetrievalInfo {
+  const chunks: RetrievalChunk[] = sources.map((s, i) => {
+    const ev = evidence?.[i];
+    return {
+      id:              uid(),
+      rank:            i + 1,
+      source:          s.file_name,
+      text:            s.text ?? '',
+      score:           s.score ?? 0,
+      matchedTerms:    [],
+      sourceType:      s.type,
+      sheetName:       s.sheet_name,
+      rowsRetrieved:   s.retrieved_row_count,
+      totalRows:       s.total_row_count,
+      columnsUsed:     s.columns_used,
+      tableRows:       s.rows,
+      sqlQuery:        s.sql,
+      pageNumber:      s.page_number,
+      sectionHeading:  s.section_heading,
+      highlightSpans:  s.highlight_spans,
+      boundingBoxes:   ev?.bounding_boxes,
+      characterOffsets: ev?.character_offsets,
+    };
+  });
+  return { chunks, searchMode, topK, totalSearched: sources.length };
+}
 
 /** Create a blank session object */
 const newSession = (name = 'New Chat'): Session => ({
@@ -46,44 +85,6 @@ const newSession = (name = 'New Chat'): Session => ({
   messages: [],
   fileContext: null,
 });
-
-/**
- * Generate plausible-looking mock retrieval chunks for UI demo.
- * In production these would come from your vector-search backend.
- * Called after every bot reply so the retrieval panel has data.
- */
-const makeMockRetrieval = (
-  userMsg: string,
-  fileCtx: FileContext | null,
-  controls: PowerControls,
-): RetrievalInfo => {
-  // Grab the first 3 words > 3 chars as "matched terms"
-  const terms = userMsg
-    .split(/\s+/)
-    .filter(w => w.length > 3)
-    .slice(0, 3);
-
-  const count = Math.min(controls.topK, 4); // cap demo at 4 cards
-
-  const chunks: RetrievalChunk[] = Array.from({ length: count }, (_, i) => ({
-    id:           uid(),
-    rank:         i + 1,
-    source:       fileCtx ? fileCtx.name : 'knowledge_base.txt',
-    score:        Math.max(0.45, parseFloat((0.97 - i * 0.13 - Math.random() * 0.04).toFixed(3))),
-    matchedTerms: terms,
-    text:
-      fileCtx
-        ? `Row context: ${fileCtx.preview.split('\n').slice(i * 2, i * 2 + 2).join(' | ') || 'No preview available'}`
-        : `Passage ${i + 1}: "${userMsg.slice(0, 50)}…" — this is a mock retrieved passage that would come from your vector store.`,
-  }));
-
-  return {
-    chunks,
-    searchMode:    controls.searchMode,
-    topK:          controls.topK,
-    totalSearched: controls.topK * 5,
-  };
-};
 
 // ── ChatApp (inner) ────────────────────────────────────────────
 // Separated from the ThemeProvider wrapper so context is available.
@@ -97,6 +98,13 @@ function ChatApp() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [settingsOpen,setSettingsOpen]= useState(false);
   const [openRetrieval, setOpenRetrieval] = useState<RetrievalInfo | null>(null);
+  const [panelOpen,   setPanelOpen]   = useState(false);
+  const [activeRetrievalMsgId, setActiveRetrievalMsgId] = useState<string | null>(null);
+
+  // ── PDF viewer state ──────────────────────────────────────
+  const [pdfViewerOpen,   setPdfViewerOpen]   = useState(false);
+  const [pdfTargetPage,   setPdfTargetPage]   = useState(1);
+  const [pdfHighlights,   setPdfHighlights]   = useState<BoundingBox[]>([]);
 
   const messagesEndRef  = useRef<HTMLDivElement>(null);
   const scrollRef       = useRef<HTMLDivElement>(null);
@@ -169,7 +177,7 @@ function ChatApp() {
    *   1. Add user message
    *   2. Show typing indicator
    *   3. Call API (your real backend via utils/api.ts)
-   *   4. Add bot reply + mock retrieval info
+   *   4. Add bot reply with real retrieval info from backend
    */
   const handleSend = async (text: string, controls: PowerControls) => {
     const ts               = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -183,17 +191,32 @@ function ChatApp() {
 
     try {
       // 3 — Real API call (wired to FastAPI backend via Vite proxy)
-      const botText = await sendMessage(text, fileContext);
+      const response = await sendMessage(text, fileContext);
 
-      // 4 — Bot reply with attached retrieval info (UI demo data)
-      const retrievalInfo = makeMockRetrieval(text, fileContext, controls);
+      // 4 — Bot reply with real retrieval info from backend
+      const retrievalInfo = response.sources?.length
+        ? mapSources(response.sources, response.evidence, controls.searchMode, controls.topK)
+        : undefined;
+
+      const fileAttachment: FileAttachment | undefined =
+        response.download_url
+          ? {
+              // Extract filename from the URL path
+              name: response.download_url.split('/').pop() ?? 'download',
+              url:  response.download_url,
+            }
+          : undefined;
+
       const botMsg: Message = {
         id: uid(),
         role: 'bot',
-        text: botText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text:           response.reply,
+        timestamp:      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         retrievalInfo,
-        outputFormat: controls.outputFormat,
+        outputFormat:   controls.outputFormat,
+        vegaSpec:       response.vega_spec,
+        insights:       response.insights,
+        fileAttachment,
       };
       appendMessage(capturedId, botMsg);
     } catch (err) {
@@ -207,6 +230,13 @@ function ChatApp() {
     }
   };
 
+  /** Open PDF viewer at the page/highlights for a source chunk */
+  const handleOpenInPdf = useCallback((chunk: RetrievalChunk) => {
+    setPdfTargetPage(chunk.pageNumber ?? 1);
+    setPdfHighlights(chunk.boundingBoxes ?? []);
+    setPdfViewerOpen(true);
+  }, []);
+
   /** Create a new session and switch to it */
   const handleNewChat = () => {
     const s = newSession(`Chat ${sessions.length + 1}`);
@@ -214,6 +244,9 @@ function ChatApp() {
     setActiveId(s.id);
     setShowWelcome(true);
     setOpenRetrieval(null);
+    setPanelOpen(false);
+    setActiveRetrievalMsgId(null);
+    setPdfViewerOpen(false);
   };
 
   /** Switch to a session; show welcome if it's empty */
@@ -222,6 +255,9 @@ function ChatApp() {
     const s = sessions.find(x => x.id === id);
     setShowWelcome(!s?.messages.length && !s?.fileContext);
     setOpenRetrieval(null);
+    setPanelOpen(false);
+    setActiveRetrievalMsgId(null);
+    setPdfViewerOpen(false);
   };
 
   /** Delete a session (never the last one) */
@@ -259,6 +295,8 @@ function ChatApp() {
           sessionName={activeSession?.name ?? ''}
           fileName={fileContext?.name ?? null}
           onOpenSettings={() => setSettingsOpen(true)}
+          panelOpen={panelOpen}
+          onTogglePanel={() => setPanelOpen(v => !v)}
         />
 
         {/* File attachment indicator */}
@@ -300,7 +338,12 @@ function ChatApp() {
                 <MessageBubble
                   key={msg.id}
                   message={msg}
-                  onViewSources={info => setOpenRetrieval(info)}
+                  isSourceActive={activeRetrievalMsgId === msg.id && panelOpen}
+                  onViewSources={info => {
+                    setOpenRetrieval(info);
+                    setActiveRetrievalMsgId(msg.id);
+                    setPanelOpen(true);
+                  }}
                 />
               ))}
 
@@ -340,13 +383,22 @@ function ChatApp() {
 
       </main>
 
-      {/* ── Retrieval side panel (slides in from right) ─────── */}
-      {openRetrieval && (
-        <RetrievalPanel
-          info={openRetrieval}
-          onClose={() => setOpenRetrieval(null)}
-        />
-      )}
+      {/* ── Sources panel — always in flex row, width animates ── */}
+      <RetrievalPanel
+        info={openRetrieval}
+        isOpen={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        onOpenInPdf={fileContext?.isPdf ? handleOpenInPdf : undefined}
+      />
+
+      {/* ── PDF viewer — opens to the right of the sources panel ── */}
+      <PdfViewer
+        url={fileContext?.fileUrl ?? ''}
+        targetPage={pdfTargetPage}
+        highlights={pdfHighlights}
+        isOpen={pdfViewerOpen && !!fileContext?.fileUrl}
+        onClose={() => setPdfViewerOpen(false)}
+      />
 
       {/* ── Appearance settings modal ────────────────────────── */}
       {settingsOpen && (

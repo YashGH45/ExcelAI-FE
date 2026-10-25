@@ -1,0 +1,9 @@
+FILE: src/components/Sidebar.tsx
+PURPOSE: Collapsible left panel that lists all chat sessions; allows creating, selecting, and deleting sessions.
+COMPONENT: Sidebar
+PROPS: sessions, activeId, isOpen, onSelect, onCreate, onDelete
+HOOKS: none
+RENDERS: (native elements only — aside, ul, button)
+USED_BY: src/App.tsx
+CONTEXT: none
+STYLES: src/index.css (app-sidebar, sidebar-inner, sidebar-header, sidebar-title, session-list, session-item, session-btn, session-name, new-chat-btn, delete-btn)

@@ -1,170 +1,315 @@
 // ============================================================
 //  RetrievalPanel.tsx
-//  Right-side drawer showing retrieved source chunks for the
-//  last inspected bot message.  Opens when the user clicks
-//  "View Sources" on any bot bubble that has retrievalInfo.
+//  Fixed-overlay right-side panel showing source chunks for a
+//  selected bot message. Does not push or resize the chat area.
 //
-//  What it shows:
-//    • Search mode (Semantic / Keyword) and Top-K used
-//    • Each chunk: rank badge, source name, similarity score
-//      with a visual bar, matched-term highlights, text excerpt
+//  Card types:
+//    • SpreadsheetCard — file/sheet header, meta row, mini table,
+//                        collapsible SQL query
+//    • PdfCard         — file/page/heading header, relevance bar,
+//                        chunk text with emphasised numbers/acronyms
+//    • GenericCard     — fallback for unknown source types
 //
 //  Props:
-//    info    — RetrievalInfo object from the message
-//    onClose — close the panel
+//    info    — RetrievalInfo for the selected message (null = none)
+//    isOpen  — drives the open/close CSS class
+//    onClose — collapses the panel
 // ============================================================
 
-import { X, Database, Zap, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Database, FileSpreadsheet, FileText, ChevronDown, ChevronRight, AlertCircle, ExternalLink } from 'lucide-react';
 import type { RetrievalInfo, RetrievalChunk } from '../types';
 
 interface Props {
-  info: RetrievalInfo;
+  info: RetrievalInfo | null;
+  isOpen: boolean;
   onClose: () => void;
+  onOpenInPdf?: (chunk: RetrievalChunk) => void;
 }
 
-// ── Score helpers ──────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────
 
-/** Map a 0–1 score to a CSS class for colour-coding */
-function scoreClass(score: number): string {
-  if (score >= 0.75) return 'score-high';
-  if (score >= 0.50) return 'score-mid';
-  return 'score-low';
-}
-
-/** Format score as a percentage string */
 const pct = (score: number) => `${Math.round(score * 100)}%`;
 
-// ── Highlight matched terms inside chunk text ─────────────────
-// Wraps every occurrence of a matched term with a <mark> element.
-function HighlightedText({
-  text, terms,
-}: { text: string; terms: string[] }) {
-  if (!terms.length) return <>{text}</>;
+// ── Highlighted text ───────────────────────────────────────────
+// When the backend sends highlight_spans, slices the text string at those
+// exact character offsets and wraps each highlighted segment in a <mark>.
+// Falls back to emphasising numbers and acronyms when no spans are present.
 
-  // Build a case-insensitive regex matching any of the terms
-  const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const regex   = new RegExp(`(${escaped.join('|')})`, 'gi');
-  const parts   = text.split(regex);
+const EMPHASIS_RE = /(\b\d[\d.,]*%?\b|\b[A-Z]{2,}\b)/g;
 
+function HighlightText({
+  text,
+  spans,
+}: {
+  text: string;
+  spans?: { start: number; end: number }[];
+}) {
+  // ── span-based highlighting ──────────────────────────────────
+  if (spans && spans.length > 0) {
+    // Sort spans by start position and merge any overlaps
+    const sorted = [...spans].sort((a, b) => a.start - b.start);
+    const merged: { start: number; end: number }[] = [];
+    for (const span of sorted) {
+      const last = merged[merged.length - 1];
+      if (last && span.start <= last.end) {
+        last.end = Math.max(last.end, span.end);
+      } else {
+        merged.push({ ...span });
+      }
+    }
+
+    const segments: (string | React.ReactElement)[] = [];
+    let cursor = 0;
+    merged.forEach(({ start, end }, i) => {
+      const s = Math.max(0, start);
+      const e = Math.min(text.length, end);
+      if (cursor < s) segments.push(text.slice(cursor, s));
+      segments.push(<mark key={i} className="highlight-mark">{text.slice(s, e)}</mark>);
+      cursor = e;
+    });
+    if (cursor < text.length) segments.push(text.slice(cursor));
+    return <>{segments}</>;
+  }
+
+  // ── fallback: emphasise numbers + acronyms ───────────────────
+  const parts = text.split(EMPHASIS_RE);
   return (
     <>
       {parts.map((part, i) =>
-        regex.test(part)
-          ? <mark key={i}>{part}</mark>
+        EMPHASIS_RE.test(part)
+          ? <em key={i} className="emphasis-term">{part}</em>
           : part
       )}
     </>
   );
 }
 
-// ── Single chunk card ──────────────────────────────────────────
-function ChunkCard({ chunk }: { chunk: RetrievalChunk }) {
-  const cls = scoreClass(chunk.score);
+// ── Spreadsheet source card ────────────────────────────────────
+function SpreadsheetCard({ chunk }: { chunk: RetrievalChunk }) {
+  const [sqlOpen, setSqlOpen] = useState(false);
+  const cols    = chunk.columnsUsed ?? [];
+  const rows    = chunk.tableRows  ?? [];
+  const headers = cols.length > 0 ? cols : rows.length > 0 ? Object.keys(rows[0]) : [];
+  const truncated = chunk.rowsRetrieved != null && chunk.totalRows != null
+    && chunk.rowsRetrieved < chunk.totalRows;
+
   return (
-    <div className="chunk-card">
-      {/* Header row: source file + score badge */}
-      <div className="chunk-header">
-        <span className="rank-badge">#{chunk.rank}</span>
-        <span className="chunk-source" title={chunk.source}>
+    <div className="source-card">
+      {/* Header: "sales.xlsx › Sheet1" */}
+      <div className="source-card-header">
+        <span className="source-card-icon"><FileSpreadsheet size={13} /></span>
+        <div className="source-card-title" title={chunk.source}>
           {chunk.source}
-        </span>
-        <span className={`chunk-score ${cls}`}>
-          {pct(chunk.score)}
-        </span>
+          {chunk.sheetName && (
+            <span className="source-card-separator"> › {chunk.sheetName}</span>
+          )}
+        </div>
       </div>
 
-      {/* Visual score bar */}
-      <div className="score-bar-track">
-        <div
-          className="score-bar-fill"
-          style={{
-            width: pct(chunk.score),
-            // Colour matches the badge class via direct CSS vars
-            background: cls === 'score-high'
-              ? 'var(--score-high)'
-              : cls === 'score-mid'
-              ? 'var(--score-mid)'
-              : 'var(--score-low)',
-          }}
-        />
-      </div>
+      {/* Collapsible SQL — first */}
+      {chunk.sqlQuery && (
+        <>
+          <button className="sql-toggle" onClick={() => setSqlOpen(v => !v)}>
+            {sqlOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+            SQL Query
+          </button>
+          {sqlOpen && (
+            <div className="sql-block">{chunk.sqlQuery}</div>
+          )}
+        </>
+      )}
 
-      {/* Chunk text with term highlights */}
-      <p className="chunk-text">
-        <HighlightedText text={chunk.text} terms={chunk.matchedTerms} />
-      </p>
+      {/* Row count badge */}
+      {chunk.rowsRetrieved != null && chunk.totalRows != null && (
+        <div className="source-card-meta">
+          <span>Showing {chunk.rowsRetrieved} of {chunk.totalRows.toLocaleString()} rows</span>
+        </div>
+      )}
 
-      {/* Show matched keyword terms if present */}
-      {chunk.matchedTerms.length > 0 && (
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {chunk.matchedTerms.map((term, i) => (
-            <span
-              key={i}
-              style={{
-                fontSize: 10,
-                padding: '1px 6px',
-                borderRadius: 10,
-                background: 'var(--accent-muted)',
-                color: 'var(--accent)',
-                fontFamily: "'IBM Plex Mono', monospace",
-              }}
-            >
-              {term}
-            </span>
-          ))}
+      {/* Data table */}
+      {headers.length > 0 && rows.length > 0 && (
+        <div className="mini-table-scroll">
+          <table className="mini-table">
+            <thead>
+              <tr>{headers.map(h => <th key={h}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri}>
+                  {headers.map(h => (
+                    <td key={h}>{row[h] != null ? String(row[h]) : ''}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {/* Truncation note */}
+          {truncated && (
+            <p className="truncation-note">
+              Results truncated — {chunk.totalRows! - chunk.rowsRetrieved!} more rows not shown
+            </p>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// ── Panel component ────────────────────────────────────────────
-export default function RetrievalPanel({ info, onClose }: Props) {
-  const modeIcon = info.searchMode === 'semantic'
-    ? <Zap size={11} />
-    : <Search size={11} />;
+// ── PDF source card ────────────────────────────────────────────
+function PdfCard({ chunk, onOpenInPdf }: { chunk: RetrievalChunk; onOpenInPdf?: (c: RetrievalChunk) => void }) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!bodyRef.current) return;
+    const mark = bodyRef.current.querySelector<HTMLElement>('.highlight-mark');
+    if (mark) mark.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+  }, [chunk.id]);
+
+  const canOpenPdf = onOpenInPdf != null && (
+    chunk.pageNumber != null || (chunk.boundingBoxes?.length ?? 0) > 0
+  );
 
   return (
-    <div className="retrieval-panel">
+    <div className="source-card">
+      {/* Header: "report.pdf · Page 4"  +  score pill */}
+      <div className="source-card-header">
+        <span className="source-card-icon"><FileText size={13} /></span>
+        <div className="source-card-title" title={chunk.source} style={{ flex: 1, minWidth: 0 }}>
+          {chunk.source}
+          {chunk.pageNumber != null && (
+            <span className="source-card-separator"> · Page {chunk.pageNumber}</span>
+          )}
+        </div>
+        <span className="score-pill">{pct(chunk.score)}</span>
+      </div>
+
+      {/* Sub-header: section heading */}
+      {chunk.sectionHeading && (
+        <div className="source-card-subtitle">{chunk.sectionHeading}</div>
+      )}
+
+      {/* Chunk text with backend-driven highlights */}
+      <div className="chunk-body" ref={bodyRef}>
+        <HighlightText text={chunk.text} spans={chunk.highlightSpans} />
+      </div>
+
+      {/* "View in PDF" button — only when bounding boxes or page number are available */}
+      {canOpenPdf && (
+        <button
+          className="view-in-pdf-btn"
+          onClick={() => onOpenInPdf!(chunk)}
+          title={`Open page ${chunk.pageNumber ?? '?'} in PDF viewer`}
+        >
+          <ExternalLink size={11} />
+          View in PDF
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Generic fallback card ──────────────────────────────────────
+function GenericCard({ chunk }: { chunk: RetrievalChunk }) {
+  return (
+    <div className="chunk-card">
+      <div className="chunk-header">
+        <span className="rank-badge">#{chunk.rank}</span>
+        <span className="chunk-source" title={chunk.source}>{chunk.source}</span>
+        <span className={`chunk-score ${chunk.score >= 0.75 ? 'score-high' : chunk.score >= 0.5 ? 'score-mid' : 'score-low'}`}>
+          {pct(chunk.score)}
+        </span>
+      </div>
+      <div className="score-bar-track">
+        <div
+          className="score-bar-fill"
+          style={{
+            width: pct(chunk.score),
+            background: chunk.score >= 0.75
+              ? 'var(--score-high)'
+              : chunk.score >= 0.5
+              ? 'var(--score-mid)'
+              : 'var(--score-low)',
+          }}
+        />
+      </div>
+      <p className="chunk-text">{chunk.text}</p>
+    </div>
+  );
+}
+
+// ── Card dispatcher ────────────────────────────────────────────
+function SourceCard({ chunk, onOpenInPdf }: { chunk: RetrievalChunk; onOpenInPdf?: (c: RetrievalChunk) => void }) {
+  if (chunk.sourceType === 'spreadsheet') return <SpreadsheetCard chunk={chunk} />;
+  if (chunk.sourceType === 'pdf')         return <PdfCard chunk={chunk} onOpenInPdf={onOpenInPdf} />;
+  return <GenericCard chunk={chunk} />;
+}
+
+// ── Panel ──────────────────────────────────────────────────────
+export default function RetrievalPanel({ info, isOpen, onClose, onOpenInPdf }: Props) {
+  return (
+    <div className={`retrieval-panel${isOpen ? ' open' : ''}`}>
+    <div className="retrieval-panel-inner">
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="retrieval-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <Database size={14} style={{ color: 'var(--accent)' }} />
-          <span className="retrieval-title">Sources &amp; Context</span>
+          <span className="retrieval-title">
+            Sources
+            {info && (
+              <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 6 }}>
+                ({info.chunks.length})
+              </span>
+            )}
+          </span>
         </div>
         <button className="icon-btn" onClick={onClose} title="Close panel">
           <X size={15} />
         </button>
       </div>
 
-      {/* ── Metadata badges ─────────────────────────────────── */}
-      <div className="retrieval-meta">
-        <span className="meta-badge" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {modeIcon}
-          {info.searchMode === 'semantic' ? 'Semantic search' : 'Keyword search'}
-        </span>
-        <span className="meta-badge">
-          Top-{info.topK} of {info.totalSearched}
-        </span>
-        <span className="meta-badge">
-          {info.chunks.length} chunk{info.chunks.length !== 1 ? 's' : ''} shown
-        </span>
-      </div>
-
-      {/* ── Chunk cards list ─────────────────────────────────── */}
-      <div className="retrieval-chunks">
-        {info.chunks.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', marginTop: 24 }}>
-            No chunks retrieved
+      {/* ── Placeholder ─────────────────────────────────────── */}
+      {!info ? (
+        <div className="retrieval-placeholder">
+          <Database size={28} style={{ opacity: 0.2 }} />
+          <p>
+            Click <strong>Sources</strong> below any response to view
+            the retrieved context.
           </p>
-        ) : (
-          info.chunks.map((chunk) => (
-            <ChunkCard key={chunk.id} chunk={chunk} />
-          ))
-        )}
+        </div>
+      ) : (
+        <>
+          {/* ── Metadata badges ────────────────────────────── */}
+          <div className="retrieval-meta">
+            <span className="meta-badge">
+              {info.searchMode === 'semantic' ? 'Semantic' : 'Keyword'}
+            </span>
+            <span className="meta-badge">Top-{info.topK} of {info.totalSearched}</span>
+          </div>
+
+          {/* ── Source cards ─────────────────────────────────── */}
+          <div className="retrieval-chunks">
+            {info.chunks.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', marginTop: 24 }}>
+                No sources retrieved
+              </p>
+            ) : (
+              info.chunks.map(chunk => (
+                <SourceCard key={chunk.id} chunk={chunk} onOpenInPdf={onOpenInPdf} />
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ── Disclaimer — always visible at bottom ─────────── */}
+      <div className="retrieval-disclaimer">
+        <AlertCircle size={11} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+        AI outputs may contain errors. Always verify against the original source before relying on this information.
       </div>
 
+    </div>
     </div>
   );
 }

@@ -1,0 +1,9 @@
+FILE: src/styles/themes.ts
+PURPOSE: Metadata for each colour theme variant; used to render the swatch picker grid in SettingsModal and to build CSS data-theme keys in ThemeContext.
+EXPORTS:
+  ThemeOption<T> — interface { id, label, swatchBg, swatchAccent }
+  LIGHT_THEMES: ThemeOption<LightTheme>[] — [sand, sky, mint, rose]
+  DARK_THEMES: ThemeOption<DarkTheme>[] — [midnight, ocean, forest, volcanic]
+  buildThemeKey(mode: string, color: string) → string — e.g. 'light-sand'
+IMPORTS: src/types/index.ts (LightTheme, DarkTheme)
+USED_BY: src/context/ThemeContext.tsx, src/components/SettingsModal.tsx

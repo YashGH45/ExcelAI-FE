@@ -1,0 +1,9 @@
+FILE: src/components/PdfTipsOverlay.tsx
+PURPOSE: Full-screen modal overlay shown while a PDF is uploading; auto-advances a carousel of six feature tips every 4 seconds with a fade transition.
+COMPONENT: PdfTipsOverlay
+PROPS: none
+HOOKS: useState (×2), useEffect (×1)
+RENDERS: (native elements only — div, p, span)
+USED_BY: src/components/WelcomeScreen.tsx
+CONTEXT: none
+STYLES: src/index.css (modal-backdrop, modal-card, pdf-tips-card, pdf-tips-progress-bar, pdf-tips-progress-fill, pdf-tips-header, pdf-tips-icon-wrap, pdf-tips-ring, pdf-tip-body, pdf-tip-label, pdf-tip-emoji, pdf-tip-title, pdf-tip-desc, pdf-tips-dots, pdf-tips-dot)

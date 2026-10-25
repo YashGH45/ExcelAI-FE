@@ -3,7 +3,7 @@
 //  Header bar that spans the full width of the main content area.
 //
 //  Left side:  sidebar toggle · app title · active session name
-//  Right side: dark/light mode toggle · settings gear
+//  Right side: sources panel toggle · dark/light mode · settings
 //
 //  Props:
 //    sidebarOpen     — current sidebar state
@@ -11,9 +11,11 @@
 //    sessionName     — name of the active session (shown truncated)
 //    fileName        — name of the attached file (shown instead of session name when present)
 //    onOpenSettings  — open the appearance settings modal
+//    panelOpen       — whether the sources panel is expanded
+//    onTogglePanel   — open/close the sources panel
 // ============================================================
 
-import { PanelLeftClose, PanelLeftOpen, Bot, Moon, Sun, Settings } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Bot, Moon, Sun, Settings } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 interface Props {
@@ -22,10 +24,13 @@ interface Props {
   sessionName: string;
   fileName?: string | null;
   onOpenSettings: () => void;
+  panelOpen: boolean;
+  onTogglePanel: () => void;
 }
 
 export default function TopBar({
   sidebarOpen, onToggleSidebar, sessionName, fileName, onOpenSettings,
+  panelOpen, onTogglePanel,
 }: Props) {
   const { isDark, toggleMode } = useTheme();
 
@@ -49,7 +54,7 @@ export default function TopBar({
         <Bot size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
         <span className="top-bar-title">Data Assistant</span>
 
-        {/* File name when a file is attached, otherwise active session name */}
+        {/* File name or active session name */}
         {(fileName || sessionName) && (
           <span className="top-bar-session">/ {fileName ?? sessionName}</span>
         )}
@@ -57,6 +62,17 @@ export default function TopBar({
 
       {/* ── Right cluster ───────────────────────────────────── */}
       <div className="top-bar-right">
+        {/* Sources panel toggle */}
+        <button
+          className="icon-btn"
+          onClick={onTogglePanel}
+          title={panelOpen ? 'Close sources panel' : 'Open sources panel'}
+        >
+          {panelOpen
+            ? <PanelRightClose size={17} />
+            : <PanelRightOpen  size={17} />}
+        </button>
+
         {/* Dark / light mode quick toggle */}
         <button
           className="icon-btn"

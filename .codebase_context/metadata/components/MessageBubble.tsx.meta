@@ -1,0 +1,9 @@
+FILE: src/components/MessageBubble.tsx
+PURPOSE: Renders a single chat message (user or bot) with markdown formatting, optional Vega-Lite chart, Excel/CSV inline preview, key insights panel, and a "View Sources" button.
+COMPONENT: MessageBubble (default), ExcelPreview (internal sub-component)
+PROPS: message, onViewSources
+HOOKS: useState (×1 in ExcelPreview), useEffect (×1 in ExcelPreview)
+RENDERS: ChartRenderer (conditional on vegaSpec)
+USED_BY: src/App.tsx
+CONTEXT: none
+STYLES: src/index.css (message-row, message-avatar, message-bubble, message-footer, message-timestamp, source-btn, code-block, inline-code, chart-wrapper, insights-panel, excel-preview-wrapper, excel-preview-table)

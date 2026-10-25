@@ -1,0 +1,9 @@
+FILE: src/components/WelcomeScreen.tsx
+PURPOSE: Shown when a new empty session opens; offers file upload or skip-to-chat; manages Smart Parser toggle, drag-drop upload, and PDF loading overlay.
+COMPONENT: WelcomeScreen
+PROPS: onFileLoaded, onSkip
+HOOKS: useState (×6), useRef (×1), useCallback (×4)
+RENDERS: SmartParserDialog (conditional), PdfTipsOverlay (conditional)
+USED_BY: src/App.tsx
+CONTEXT: none
+STYLES: src/index.css (welcome-screen, welcome-title, welcome-subtitle, option-cards, option-card, uploader-card, drop-zone, sp-toggle-row, sp-upload-badge)

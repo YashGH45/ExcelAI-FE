@@ -1,0 +1,9 @@
+FILE: src/components/ChatInput.tsx
+PURPOSE: Bottom input bar with auto-growing textarea, collapsible power controls panel (Top-K, search mode, strict mode), output format pills, and send button.
+COMPONENT: ChatInput
+PROPS: onSend, disabled
+HOOKS: useState (×3), useEffect (×1), useRef (×1)
+RENDERS: (native elements only — div, button, textarea, input[range])
+USED_BY: src/App.tsx
+CONTEXT: none
+STYLES: src/index.css (chat-input-bar, controls-toggle-row, controls-toggle-btn, power-controls-panel, control-row, control-label, topk-slider, topk-value, mode-pills, mode-pill, toggle-switch, strict-label, format-pills, format-pill, reply-container, plus-btn, reply-textarea, reply-send-btn)
