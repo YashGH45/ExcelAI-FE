@@ -1,112 +1,183 @@
-You are setting up a Token Shield pipeline for this React + Vite repository.
-Your goal is to build a 3-stage context compression system so that future
-Claude sessions consume the minimum possible tokens when working in this codebase.
+# Frontend Task: Implement Interactive PDF Evidence Viewer (Inspect Before Modifying)
 
-Do NOT open or read every file. Use `find`, `ls`, and targeted reads only.
+## Objective
 
----
+Extend the existing frontend so users can see exactly where an AI-generated answer originated inside the uploaded PDF.
 
-## STAGE 1 — BUILD: Graphify
+**IMPORTANT:** Before making any UI changes, inspect the current implementation.
 
-1. Run: `find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.jsx" -o -name "*.js" \
-     -o -name "*.css" -o -name "*.scss" -o -name "*.json" \) \
-     ! -path "./.git/*" ! -path "./node_modules/*" ! -path "./dist/*" ! -path "./.vite/*"`
+Do **not** redesign or replace existing layouts if similar functionality already exists.
 
-2. For each .tsx / .jsx component file found, extract:
-   - Component name and its one-line purpose
-   - Props interface / type (names only, not full types)
-   - Other components it imports and renders
-   - Hooks used (custom or React built-ins)
-   - State management slice / store it reads from (if any)
-
-3. For each .ts / .js utility/service file found, extract:
-   - Exported function names and signatures
-   - What it imports from (other project files + key libraries)
-
-4. Note any route definitions found (React Router, TanStack Router, etc.)
-
-5. Write this as a JSON knowledge graph to: `graphify-out/graph.json`
-   Schema:
-```json
-   {
-     "nodes": [
-       { "id": "src/components/UserCard.tsx", "type": "component",
-         "defines": ["UserCard"],
-         "props": ["userId", "onSelect", "variant"],
-         "purpose": "Displays a single user summary card" }
-     ],
-     "edges": [
-       { "from": "src/pages/UsersPage.tsx",
-         "to": "src/components/UserCard.tsx", "relationship": "renders" },
-       { "from": "src/components/UserCard.tsx",
-         "to": "src/store/userSlice.ts", "relationship": "reads-store" }
-     ]
-   }
-```
+Only implement the missing features.
 
 ---
 
-## STAGE 2 — COMPRESS: Graph-RAG
+## Phase 1 — Inspect Current UI
 
-Create a `.codebase_context/` directory at the project root.
+Determine whether the application already contains:
 
-1. Generate `.codebase_context/INDEX.meta`
-   - One line per file in the format:
-     `<relative_path> | <type> | <one-line purpose> | <key symbols (comma-separated, max 5)>`
-   - Keep the entire file under 6 KB total.
-   - Group lines by category with a comment header:
-     `# PAGES`, `# COMPONENTS`, `# HOOKS`, `# STORE`, `# SERVICES`, `# UTILS`
-   - Example:
-   # PAGES
-    src/pages/UsersPage.tsx | page | Lists all users with search/filter | UsersPage, useUserSearch
-    # COMPONENTS
-    src/components/UserCard.tsx | component | Single user summary card | UserCard, userId, onSelect
+* PDF viewer
+* Source section
+* Right-side document panel
+* Page navigation
+* Zoom controls
+* Scroll-to-page functionality
+* Highlight overlay
 
-
-2. For every component / page file, generate `.codebase_context/metadata/<filepath>.meta`
-    - Format (plain text, keep under 300 tokens each):
-
-FILE: src/components/UserCard.tsx
-  PURPOSE: Displays a single user summary card with avatar and role badge
-  COMPONENT: UserCard
-  PROPS: userId (string), onSelect (fn), variant ("compact"|"full")
-  HOOKS: useUser(userId), useState, useCallback
-  RENDERS: Avatar, RoleBadge, Button
-  USED_BY: src/pages/UsersPage.tsx, src/components/UserList.tsx
-  STORE: reads userSlice.selectUserById
-  STYLES: UserCard.module.css
-
-
-3. For hooks and service files, generate `.meta` files listing:
-   - What the hook/service does, parameters, return shape, and which components use it.
-
-4. Generate `.codebase_context/ROUTES.meta` listing every route:
-/ → src/pages/HomePage.tsx
-/users → src/pages/UsersPage.tsx
-/users/:id → src/pages/UserDetailPage.tsx
-
+Reuse existing components whenever possible.
 
 ---
 
-## STAGE 4 — Generate CLAUDE.md
+## Phase 2 — Backend Integration
 
-Finally, create a `CLAUDE.md` file at the project root (see separate template).
-Populate it with:
-- Project name and stack (React version, Vite version, key libraries)
-- Entry point (main.tsx → App.tsx)
-- Route map (from ROUTES.meta)
-- Key directories and what lives in each
-- The 5 most important components/pages
-- State management approach and store location
-- API base URL / environment variables (from .env.example or vite.config.ts)
-- Test commands found (vitest, jest, playwright, etc.)
-- Build command and output directory
+Inspect the backend response.
 
-When all files are written, print a summary:
-- How many nodes in graph.json
-- How many .meta files created
-- Size of INDEX.meta
-- Confirm CLAUDE.md and ROUTES.meta exist
+If evidence metadata already exists, consume it.
 
-Do not open any raw source file unless it is impossible to determine the above
-information from file names, imports, and the top 20 lines only.c
+Otherwise integrate with the new backend response.
+
+Do not modify unrelated API calls.
+
+---
+
+## Phase 3 — Sources Panel
+
+Create a Sources section associated with every AI response.
+
+Each source card should display:
+
+* Page number
+* Section heading (if available)
+* Similarity/confidence score
+* Small preview of supporting text
+
+Selecting a source should:
+
+* Open the PDF viewer
+* Navigate to the correct page
+* Scroll smoothly
+* Highlight the referenced text
+* Briefly animate or flash the highlight
+
+---
+
+## Phase 4 — PDF Viewer
+
+If a PDF viewer already exists:
+
+Extend it.
+
+Otherwise create one.
+
+Required capabilities:
+
+* Smooth scrolling
+* Zoom in/out
+* Page navigation
+* Jump to page
+* Responsive layout
+
+---
+
+## Phase 5 — Highlight Layer
+
+Implement a highlight overlay using the bounding boxes returned by the backend.
+
+Highlights should:
+
+* Overlay the PDF
+* Support multiple highlighted regions
+* Stay correctly aligned while zooming
+* Update while scrolling
+* Be semi-transparent
+* Not permanently modify the PDF
+
+If coordinates are unavailable, highlight the entire page as a fallback.
+
+---
+
+## Phase 6 — User Interaction
+
+Clicking a source card should:
+
+* Navigate to the relevant page
+* Automatically scroll into view
+* Display the highlighted region
+
+If multiple evidence items exist:
+
+* Highlight all supporting regions
+* Emphasize the selected one
+
+Future-proof the implementation so sentence-level citations can be supported later.
+
+---
+
+## Phase 7 — Performance
+
+Do not reload the PDF every time a source is selected.
+
+Cache:
+
+* PDF document
+* Rendered pages
+* Highlight overlays
+
+If the current viewer supports virtualization, preserve it.
+
+Render only visible pages when appropriate.
+
+---
+
+## Phase 8 — Error Handling
+
+Gracefully handle:
+
+* Missing coordinates
+* Missing pages
+* Invalid evidence
+* Empty evidence arrays
+* OCR PDFs with approximate coordinates
+
+Never allow evidence rendering failures to break the PDF viewer.
+
+---
+
+## Phase 9 — UI Consistency
+
+Maintain the current design language.
+
+Reuse existing:
+
+* Components
+* Colors
+* Typography
+* Buttons
+* Layout
+* Theme
+
+Do not redesign the application unless absolutely required.
+
+---
+
+## Phase 10 — Code Quality
+
+Before implementing anything, inspect whether similar functionality already exists.
+
+If it does:
+
+Reuse and extend it.
+
+Avoid:
+
+* unnecessary refactoring
+* duplicate components
+* replacing existing viewers
+* breaking current workflows
+
+The final experience should allow a user to ask a question, receive answer, view the supporting sources, click a source, and instantly navigate to the exact highlighted location inside the PDF without disrupting the existing application.
+
+
+Note :- take the dto field names for reference and go ahead with existing ones so as to not break the flow in backend
+
+Also ChatResponse.evidence — array of evidence objects. Each item maps 1:1 to the corresponding sources entry and gives you bounding_boxes for PDF-viewer highlighting and character_offsets for text-position navigation.

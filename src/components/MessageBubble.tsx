@@ -27,6 +27,7 @@ import ChartRenderer from './ChartRenderer';
 interface Props {
   message: Message;
   onViewSources?: (info: RetrievalInfo) => void;
+  isSourceActive?: boolean;
 }
 
 // ── Markdown renderer ──────────────────────────────────────────
@@ -200,7 +201,7 @@ function ExcelPreview({ attachment }: { attachment: FileAttachment }) {
 }
 
 // ── Component ──────────────────────────────────────────────────
-export default function MessageBubble({ message, onViewSources }: Props) {
+export default function MessageBubble({ message, onViewSources, isSourceActive }: Props) {
   const isUser  = message.role === 'user';
   const fmt     = message.outputFormat ?? 'text';
   const hasChart      = !isUser && !!message.vegaSpec;
@@ -262,7 +263,7 @@ export default function MessageBubble({ message, onViewSources }: Props) {
 
           {!isUser && message.retrievalInfo && onViewSources && (
             <button
-              className="source-btn"
+              className={`source-btn${isSourceActive ? ' active' : ''}`}
               onClick={() => onViewSources(message.retrievalInfo!)}
               title="View retrieved source chunks"
             >

@@ -18,6 +18,34 @@ export interface UploadResponse {
     col_count?: number;
 }
 
+/** One source chunk as returned by the backend */
+export interface BackendSource {
+    type:                 'spreadsheet' | 'pdf' | 'generic';
+    file_name:            string;
+    // Spreadsheet fields
+    sheet_name?:          string;
+    sql?:                 string;
+    retrieved_row_count?: number;
+    total_row_count?:     number;
+    columns_used?:        string[];
+    rows?:                Record<string, string | number | null>[];
+    // PDF fields
+    page_number?:         number;
+    section_heading?:     string;
+    text?:                string;
+    score?:               number;
+    /** Character-level spans into `text` that the backend wants highlighted */
+    highlight_spans?:     { start: number; end: number }[];
+}
+
+/** Evidence for one source chunk — maps 1:1 to the sources array by index */
+export interface BackendEvidence {
+    /** Bounding boxes in PDF user-space for the highlight overlay */
+    bounding_boxes?: { page: number; x: number; y: number; width: number; height: number }[];
+    /** Character offsets within the PDF text for precise text-position navigation */
+    character_offsets?: { start: number; end: number };
+}
+
 /** Structured response from the backend chat endpoint */
 export interface ChatResponse {
     reply: string;
@@ -27,6 +55,14 @@ export interface ChatResponse {
     insights?: string[];
     /** Download URL for a file returned by the backend, e.g. "/api/download/result.csv" */
     download_url?: string;
+    /** Retrieved source chunks — present when the backend performs RAG */
+    sources?: BackendSource[];
+    /**
+     * Evidence items — each index corresponds to sources[index].
+     * Provides bounding_boxes for PDF-viewer highlighting and
+     * character_offsets for text-position navigation.
+     */
+    evidence?: (BackendEvidence | null)[];
 }
 
 /** Send a message to FastAPI and return the full chat response */
@@ -53,6 +89,8 @@ export const sendMessage = async (
         vega_spec:    data.vega_spec    ?? undefined,
         insights:     data.insights     ?? undefined,
         download_url: data.download_url ?? undefined,
+        sources:      data.sources      ?? undefined,
+        evidence:     data.evidence     ?? undefined,
     };
 };
 

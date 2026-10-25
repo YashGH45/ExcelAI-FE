@@ -47,6 +47,9 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
   const doUpload = useCallback(async (file: File) => {
     setError(null);
     setLoading(true);
+    // Capture a blob URL for PDFs so the viewer can render them later
+    const isPdf   = /\.pdf$/i.test(file.name);
+    const fileUrl = isPdf ? URL.createObjectURL(file) : undefined;
     try {
       const result = await uploadFile(file, { smartParser: false });
       onFileLoaded({
@@ -55,8 +58,11 @@ export default function WelcomeScreen({ onFileLoaded, onSkip }: Props) {
         colCount: result.col_count ?? 0,
         preview:  '',
         raw:      [],
+        fileUrl,
+        isPdf,
       });
     } catch (e) {
+      if (fileUrl) URL.revokeObjectURL(fileUrl); // clean up on failure
       setError((e as Error).message ?? 'Upload failed.');
     } finally {
       setLoading(false);
